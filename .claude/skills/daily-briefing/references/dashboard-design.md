@@ -96,9 +96,10 @@ body {
    - 4b. **상대성과 카드** — 포트폴리오 vs S&P500 / NDX / SOXX / KOSPI 일일 변동률 + 핵심 벤치마크 대비 ±x.x%p
    - 4c. **가드레일 카드** — 🔴 위험 / 🟠 경고 / 🟡 주의 단계별 표시 (없으면 ✅ 한 줄)
 5. **추천 반영 추적**: ✅/⚠️ 목록
-6. **보유 종목 분석**: 변동 ±3% 이상 종목 + **주요 보유 종목 주간 점검**(수요일 또는 비중 ≥10%) — 없으면 "특이사항 없음"
+6. **보유 종목 분석**: AI 가 의미 있다고 판단한 변동 종목 + 주기적 리스크 점검 결과 — 없으면 "특이사항 없음"
 7. **매도/매수 추천**: 보유 종목 기준, 시세 앵커 트리거 가격 명시
-8. **🆕 신규 매수 후보** (Top 3~5): 보유 외 매력적 종목 + **각 후보별 100점 점수표** + 보류 시 사유
+8. **🆕 신규 매수 후보** (개수 자유 — 1개 ~ 여러 개): 보유 외 매력적 종목. 각 후보별 **narrative 추천** (강점·약점·시세 앵커 기반 진입가/손절/익절·hidden risk·추천 비중). 점수표 없음.
+   - 8b. **🔍 AI 가 보류 권고한 후보 (조건부)** — AI 가 매력적이라고 판단했으나 timing·환율·이벤트·현금 같은 *맥락 요인* 으로 보류 권고한 후보가 있을 때만 렌더링. 보류 사유·한 줄 평 노출. 사용자가 직접 판단하도록 함.
 9. **세금 시뮬레이션**: KIS + Kiwoom 합산, 공제 잔여, 예상 세금
 10. **이번 달 입금 가이드**: 다음 입금 D-X, 분배 추천
 11. **이번 주 일정**: FOMC, 어닝, 경제지표
@@ -160,15 +161,14 @@ body {
 
 ## 시세 앵커 트리거 가격 표시 패턴
 
-집중 위험 종목의 단계적 익절 트리거를 보여줄 때:
+종목별 익절·손절 가격을 보여줄 때. AI 가 시세 앵커(ma50·ma200·atr20·52w) 를 *어떻게* 조합해서 가격을 산출했는지 사용자가 검증할 수 있게 근거 컬럼 포함.
 
 ```html
 <div class="trigger-card">
   <div class="trigger-symbol">[종목] <span class="muted">비중 [X]%</span></div>
   <table class="trigger-table">
-    <tr><td>1차 익절</td><td class="up">$[값]</td><td class="muted">ma50 + 2×ATR</td></tr>
-    <tr><td>2차 익절</td><td class="up">$[값]</td><td class="muted">52w high × 0.97</td></tr>
-    <tr><td>손절</td><td class="down">$[값]</td><td class="muted">ma200 − 2×ATR</td></tr>
+    <tr><td>익절 트리거</td><td class="up">$[값]</td><td class="muted">[AI 가 사용한 앵커 조합 — 종목 특성·시장 상황 보고 판단]</td></tr>
+    <tr><td>손절 트리거</td><td class="down">$[값]</td><td class="muted">[근거]</td></tr>
     <tr><td>현재가</td><td>$[값]</td><td class="muted">(stale: YYYY-MM-DD 캐시 — stale 시만)</td></tr>
   </table>
 </div>
@@ -219,6 +219,29 @@ body {
 
 ---
 
+## AI 가 보류 권고한 후보 카드 패턴 (8b, 조건부)
+
+AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 *맥락* 요인으로 보류 권고한 후보가 있을 때만 렌더링.
+없으면 카드 자체 생략.
+
+```html
+<div class="card">
+  <div class="card-title">🔍 참고: AI 가 보류 권고한 후보</div>
+  <table class="data-table">
+    <tr>
+      <td>[종목]</td>
+      <td class="muted">보류 사유: [맥락 요인]</td>
+    </tr>
+    <tr>
+      <td colspan="2" class="muted">→ [한 줄 평 — 어떤 매력이 있는데 무엇 때문에 미루는지]</td>
+    </tr>
+  </table>
+  <div class="muted" style="margin-top:8px;">사용자가 직접 판단하여 사후 진입 검토 가능.</div>
+</div>
+```
+
+---
+
 ## 회고 카드 패턴 (12, 조건부)
 
 월요일이면 7일 / 매월 1일이면 30일. 평일에는 카드 자체 미렌더링.
@@ -231,13 +254,13 @@ body {
 
   <div class="card-title" style="margin-top:12px;">🟢 잘 된 추천</div>
   <table class="data-table">
-    <tr><td>[종목] (점수 [N])</td><td class="up">+[%]</td><td class="muted">[적중 원인 카테고리]</td></tr>
+    <tr><td>[종목]</td><td class="up">+[%]</td><td class="muted">[적중 원인 narrative]</td></tr>
   </table>
 
   <div class="card-title" style="margin-top:12px;">🔴 실패한 추천</div>
   <table class="data-table">
     <tr>
-      <td>[종목] (점수 [N])</td>
+      <td>[종목]</td>
       <td class="down">−[%]</td>
       <td class="muted">실패 카테고리: [거시 오판/리스크 누락/이벤트 직전/타이밍]</td>
     </tr>
@@ -273,6 +296,6 @@ body {
 - [ ] `anchors_source` 가 stale 이면 표기됐는가
 - [ ] **4b 상대성과 카드** 가 포트폴리오 안에 있는가 (S&P/NDX/SOXX 비교)
 - [ ] **4c 가드레일 카드** 가 3단계 색상으로 표시되는가
-- [ ] 신규 매수 후보(8번)에 **100점 점수표** 가 종목별로 들어있는가
-- [ ] 보류 후보는 보류 사유가 명시됐는가
+- [ ] 신규 매수 후보(8번)에 종목별 narrative 추천이 들어있는가 (강점·약점·진입가·손절·익절·리스크·비중)
+- [ ] AI 가 보류 권고한 후보(8b)가 있으면 사유와 한 줄 평이 명시됐는가
 - [ ] 오늘이 월요일/매월 1일이면 **12번 회고 카드** 가 렌더링됐는가
