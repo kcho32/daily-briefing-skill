@@ -1,4 +1,18 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__portfolio_mcp__get_portfolio_data",
+      "mcp__portfolio_mcp__get_trading_history",
+      "mcp__portfolio_mcp__get_realized_pnl",
+      "mcp__portfolio_mcp__get_sector_performance",
+      "mcp__portfolio_mcp__get_kr_sector_performance",
+      "mcp__portfolio_mcp__get_stock_candidates",
+      "mcp__portfolio_mcp__get_kr_stock_candidates",
+      "mcp__notifier_mcp__send_briefing",
+      "mcp__notifier_mcp__backup_to_github",
+      "mcp__notifier_mcp__list_recent_dashboards"
+    ]
+  },
   "hooks": {
     "Stop": [
       {
