@@ -98,14 +98,55 @@ notifier_mcp.list_recent_dashboards(limit=N)
 
 회고 기간 실패 사례들을 묶어서:
 - 동일 원인(예: hidden risk 미감지·세금 영향 누락·변동성 과소평가·거시 시그널 무시 등)이 **3건 이상 누적** 됐는가?
-- 누적됐으면 → Step 8 의 PR 생성 절차 진입
+- 누적됐으면 → Step 6 의 PR 생성 절차 진입
 - 누적 안 됐으면 → 회고 narrative 에만 패턴 보고, PR 없음
 
 단발 사례는 PR 만들지 않음. AI가 *진짜 패턴*이라고 판단할 때만.
 
-### Step 6. 텔레그램 회고 메시지 작성
+### Step 6. 패턴 PR 생성 (조건 충족 시만)
 
-**모드 동일 풀 분량.** 7일/30일 차이는 마지막의 *카테고리별 분석 + 다음 달 개선* 섹션 유무.
+> **왜 텔레그램 작성보다 먼저인가:** Step 7 의 텔레그램 본문에 PR 링크 (`🔧 개선 PR 생성됨` 섹션) 가 들어가야 하므로 PR URL 확보가 선행 조건. 조건 미충족이면 이 step 은 건너뛰고 Step 7 로.
+
+#### 6a. 생성 조건
+
+- 동일 카테고리/원인의 실패가 **3건 이상 누적** (Step 5 에서 판단)
+- 변경이 *추가·보강* 성격 (새 사실 추가, 컨텍스트 보강)
+- 변경 위치가 **수정 가능 영역** 내
+
+#### 6b. 수정 가능 영역
+
+✅ **PR 자동 생성 가능:**
+- `.claude/skills/daily-briefing/SKILL.md`
+- `.claude/skills/daily-briefing/references/buying-framework.md`
+- `.claude/skills/daily-briefing/references/crisis-playbook.md`
+- `.claude/skills/daily-briefing/references/dashboard-design.md`
+- `.claude/skills/retro/SKILL.md` (이 파일 자체 — 회고 방식 개선)
+
+❌ **수정 금지** (AI 안전망 — 사용자 명시적 요청 시만):
+- `.claude/hooks/*` (Stop hook — AI 자기 검증 약화 방지)
+- `.claude/settings.json` (hook 등록 — 우회 방지)
+
+위 두 영역은 회고에서 "Stop hook가 너무 엄격하다" 같은 판단이 들어도 PR 만들지 않음.
+
+#### 6c. PR 생성 절차
+
+1. **새 브랜치**: `retro/YYYY-MM-DD-<주제-슬러그>` (예: `retro/2026-05-25-strengthen-hidden-risk`)
+2. **수정 사유** 명시한 커밋 (커밋 메시지에 회고 기간 + 근거 한 줄)
+3. `gh pr create` 로 PR 열기
+4. **PR description 필수 포함:**
+   - 회고 기간 (YYYY-MM-DD ~ YYYY-MM-DD)
+   - 실패 사례 수 + narrative
+   - 제안 변경의 근거 — 왜 이 수정이 AI 의 더 나은 reasoning 을 돕는가
+   - 예상 효과 — 변경 후 다음 회고에서 어떤 개선이 보일 것 같은지
+   - **자체 점검**: 이 PR 이 AI 자율 판단 원칙을 약화시키지 않음 (처방·임계값·강제 룰 추가가 아님)
+
+#### 6d. Sweep PR 원칙
+
+매 회고마다 PR 만들지 않음. 별 패턴 없으면 회고 narrative 에 "이번 [주/달] 특이 패턴 없음" 한 줄로 끝.
+
+### Step 7. 텔레그램 회고 메시지 작성 + 발사
+
+**모드 동일 풀 분량.** 7일/30일 차이는 마지막의 *카테고리별 분석 + 다음 달 개선* 섹션 유무. Step 6 에서 PR 이 생성됐다면 URL·브랜치명 본문에 반영.
 
 **섹션 (순서 고정):**
 
@@ -138,7 +179,7 @@ notifier_mcp.list_recent_dashboards(limit=N)
 💡 다음 달 개선
 [AI 도출 통찰 — 어떻게 다르게 reasoning 할지]
 
-[패턴 PR 생성한 경우 추가:]
+[Step 6 에서 PR 생성한 경우 추가:]
 🔧 개선 PR 생성됨
 • 브랜치: retro/YYYY-MM-DD-<주제>
 • 변경: [한 줄 요약]
@@ -149,7 +190,16 @@ notifier_mcp.list_recent_dashboards(limit=N)
 
 **HTML 태그만** (Telegram parse_mode='HTML'): `<b>`, `<i>`, `<a href>`, `<code>`, `<pre>` 만 허용. `&` `<` `>` 이스케이프 필수.
 
-### Step 7. HTML 회고 대시보드 작성
+**작성 직후 즉시 발사:**
+```
+notifier_mcp.send_telegram_message(text=<위 작성한 회고 본문>)
+```
+
+> **왜 여기서 바로 보내나:** 회고 텔레그램과 HTML 회고 대시보드를 한 completion 안에서 둘 다 생성하면 출력이 길어져 Anthropic API 의 stream timeout 에 걸려 routine 이 무응답으로 멈춤. 텔레그램부터 발사하고 *다음 turn* 에서 HTML 을 생성·발행.
+
+### Step 8. HTML 회고 대시보드 작성 + 발행
+
+**Step 7 의 텔레그램 발송이 완료된 다음 turn 에서 진입.** 같은 completion 안에서 텔레그램 + HTML 둘 다 만들지 말 것.
 
 영구 보존용. daily-briefing 의 dashboard-design 과 일관된 톤이지만 회고 전용 구조:
 
@@ -162,58 +212,24 @@ notifier_mcp.list_recent_dashboards(limit=N)
 6. 패턴 분석 (30일 회고만)
 7. 개선 PR 링크 (생성 시)
 
-스타일은 daily-briefing 대시보드와 동일 CSS 변수·색상 코딩 사용. 회고 대시보드 제목: `"주간 회고 YYYY-MM-DD"` 또는 `"월간 회고 YYYY-MM"`.
+스타일은 daily-briefing 대시보드와 동일 CSS 변수·색상 코딩 사용.
 
-### Step 8. 패턴 PR 생성 (조건 충족 시만)
+**작성 직후 즉시 발행:**
+```
+notifier_mcp.publish_dashboard(
+    html=<HTML>,
+    title="<주간/월간> 회고 YYYY-MM-DD",
+    date="YYYY-MM-DD"
+)
+```
 
-#### 8a. 생성 조건
-
-- 동일 카테고리/원인의 실패가 **3건 이상 누적** (Step 5 에서 판단)
-- 변경이 *추가·보강* 성격 (새 사실 추가, 컨텍스트 보강)
-- 변경 위치가 **수정 가능 영역** 내
-
-#### 8b. 수정 가능 영역
-
-✅ **PR 자동 생성 가능:**
-- `.claude/skills/daily-briefing/SKILL.md`
-- `.claude/skills/daily-briefing/references/buying-framework.md`
-- `.claude/skills/daily-briefing/references/crisis-playbook.md`
-- `.claude/skills/daily-briefing/references/dashboard-design.md`
-- `.claude/skills/retro/SKILL.md` (이 파일 자체 — 회고 방식 개선)
-
-❌ **수정 금지** (AI 안전망 — 사용자 명시적 요청 시만):
-- `.claude/hooks/*` (Stop hook — AI 자기 검증 약화 방지)
-- `.claude/settings.json` (hook 등록 — 우회 방지)
-
-위 두 영역은 회고에서 "Stop hook가 너무 엄격하다" 같은 판단이 들어도 PR 만들지 않음.
-
-#### 8c. PR 생성 절차
-
-1. **새 브랜치**: `retro/YYYY-MM-DD-<주제-슬러그>` (예: `retro/2026-05-25-strengthen-hidden-risk`)
-2. **수정 사유** 명시한 커밋 (커밋 메시지에 회고 기간 + 근거 한 줄)
-3. `gh pr create` 로 PR 열기
-4. **PR description 필수 포함:**
-   - 회고 기간 (YYYY-MM-DD ~ YYYY-MM-DD)
-   - 실패 사례 수 + narrative
-   - 제안 변경의 근거 — 왜 이 수정이 AI 의 더 나은 reasoning 을 돕는가
-   - 예상 효과 — 변경 후 다음 회고에서 어떤 개선이 보일 것 같은지
-   - **자체 점검**: 이 PR 이 AI 자율 판단 원칙을 약화시키지 않음 (처방·임계값·강제 룰 추가가 아님)
-
-#### 8d. Sweep PR 원칙
-
-매 회고마다 PR 만들지 않음. 별 패턴 없으면 회고 narrative 에 "이번 [주/달] 특이 패턴 없음" 한 줄로 끝.
-
-### Step 9. 발송 + 백업
+### Step 9. GitHub 백업
 
 ```
-1. notifier_mcp.send_briefing(
-       summary_text=<위 작성한 텔레그램 회고>,
-       dashboard_html=<HTML>,
-       dashboard_title="<주간/월간> 회고 YYYY-MM-DD",
-       dashboard_date="YYYY-MM-DD"
-   )
-2. notifier_mcp.backup_to_github()
+notifier_mcp.backup_to_github()
 ```
+
+백업 결과는 사용자에게 별도 보고 불필요 (백그라운드 동작).
 
 ---
 
@@ -245,5 +261,10 @@ notifier_mcp.list_recent_dashboards(limit=N)
 
 ## 작업 종료 후
 
-마지막에 반드시 `notifier_mcp.backup_to_github()` 호출하여 회고 대시보드를 GitHub 에 백업.
-백업 결과는 사용자에게 별도 보고할 필요 없음 (백그라운드 동작).
+발송·백업은 **세 번의 별도 도구 호출** 로 분리 (Step 7 → 8 → 9). 한 번에 묶지 말 것:
+
+1. `send_telegram_message` — 텔레그램 회고 발사 (Step 7 끝, PR 정보 포함)
+2. `publish_dashboard` — HTML 회고 대시보드 발행 (Step 8 끝)
+3. `backup_to_github` — GitHub 백업 (Step 9)
+
+각 호출이 별도 LLM turn 에서 일어나야 한 completion 이 짧게 유지되어 stream timeout 을 회피한다.

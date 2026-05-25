@@ -248,23 +248,35 @@ AI 가 다음을 종합 판단:
 - 금지: `<div>`, `<span>`, `<style>` 등
 - `&` → `&amp;`, `<` → `&lt;`, `>` → `&gt;` 이스케이프 필수
 
-### Step 9. HTML 대시보드 작성 (매일 발행)
+**작성 직후 즉시 발사** (한 completion 안에서 마무리):
+```
+notifier_mcp.send_telegram_message(text=<위 작성한 요약>)
+```
 
-**매일 모든 모드에서 발행.** 영구 보존 + 회고 가치.
+> **왜 여기서 바로 보내나:** 텔레그램 본문과 HTML 대시보드를 한 completion 안에서 둘 다 생성하면 출력이 수만 자가 되어 Anthropic API 의 stream timeout 에 걸리고 routine 이 30분 무응답으로 멈춤. 텔레그램부터 발사하고 *다음 turn* 에서 HTML 을 생성·발행하는 게 핵심.
 
-진입 즉시 `references/dashboard-design.md` 를 Read 해서 CSS 변수·색상 코딩·11개 표준 섹션 순서를 적용. 모드별 상단 배너도 그 파일의 표 사용.
+### Step 9. HTML 대시보드 작성 + 발행 (매일)
 
-### Step 10. 발송 + 백업
+**Step 8 의 텔레그램 발송이 완료된 다음 turn 에서 진입.** 같은 completion 안에서 텔레그램 + HTML 둘 다 만들지 말 것.
+
+진입 즉시 `references/dashboard-design.md` 를 Read 해서 CSS 변수·색상 코딩·11개 표준 섹션 순서를 적용. 모드별 상단 배너도 그 파일의 표 사용. 매일 모든 모드에서 발행 (영구 보존 + 회고 가치).
+
+**작성 직후 즉시 발행:**
+```
+notifier_mcp.publish_dashboard(
+    html=<HTML>,
+    title="포트폴리오 브리핑 YYYY-MM-DD",
+    date="YYYY-MM-DD"
+)
+```
+
+### Step 10. GitHub 백업
 
 ```
-1. notifier_mcp.send_briefing(
-       summary_text=<위 작성한 요약>,
-       dashboard_html=<HTML>,
-       dashboard_title="포트폴리오 브리핑 YYYY-MM-DD",
-       dashboard_date="YYYY-MM-DD"
-   )
-2. notifier_mcp.backup_to_github()
+notifier_mcp.backup_to_github()
 ```
+
+백업 결과는 사용자에게 별도 보고 불필요 (백그라운드 동작).
 
 ---
 
@@ -646,5 +658,10 @@ AI 가 종목 특성·시장 상황·사용자 컨텍스트를 종합해서 활�
 
 ## 작업 종료 후
 
-마지막에 반드시 `notifier_mcp.backup_to_github()` 호출하여 오늘 대시보드를 GitHub에 백업.
-백업 결과는 사용자에게 따로 보고할 필요 없음 (백그라운드 동작).
+발송·백업은 **세 번의 별도 도구 호출** 로 분리 (Step 8 → 9 → 10). 한 번에 묶지 말 것:
+
+1. `send_telegram_message` — 텔레그램 발사 (Step 8 끝)
+2. `publish_dashboard` — HTML 대시보드 발행 (Step 9 끝)
+3. `backup_to_github` — GitHub 백업 (Step 10)
+
+각 호출이 별도 LLM turn 에서 일어나야 한 completion 이 짧게 유지되어 stream timeout 을 회피한다. 백업 결과는 사용자에게 별도 보고 불필요 (백그라운드 동작).
