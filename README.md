@@ -1,21 +1,27 @@
 # daily-briefing-skill
 
-Anthropic Claude Code skill that runs as a scheduled remote routine (Anthropic's
-managed cloud) every morning at 7 AM KST.
+Anthropic Claude Code skills that run as scheduled remote routines (Anthropic's
+managed cloud).
 
-Pulls portfolio data from `portfolio_mcp`, fetches macro indicators via web
-search, evaluates crisis triggers + historical comparison, then delivers a
-Telegram summary + HTML dashboard via `notifier_mcp`.
+| Skill | When | Output |
+|-------|------|--------|
+| `daily-briefing` | Daily 07:00 KST | Telegram summary + HTML dashboard |
+| `retro` | Every Sunday 21:00 KST (skill auto-promotes to 30-day on the month's first Sunday) | Telegram retro + HTML retro dashboard, opens auto-PR when failure patterns repeat |
 
-## Skill location
+Both pull portfolio data from `portfolio_mcp` and deliver via `notifier_mcp`.
+`retro` reads past dashboards via `notifier_mcp.list_recent_dashboards` to
+measure recommendation outcomes.
+
+## Skill locations
 
 ```
 .claude/skills/daily-briefing/SKILL.md
+.claude/skills/retro/SKILL.md
 ```
 
-Claude Code's routine runner clones this repo and discovers the skill at the
-above path. The frontmatter `name: daily-briefing` lets you invoke it as
-`/daily-briefing`.
+Claude Code's routine runner clones this repo and discovers the skills at the
+above paths. The frontmatter `name:` lets you invoke them as `/daily-briefing`
+or `/retro [weekly|monthly]`.
 
 ## Required MCP connectors
 
