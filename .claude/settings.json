@@ -10,6 +10,8 @@
       "mcp__portfolio_mcp__get_kr_stock_candidates",
       "mcp__notifier_mcp__send_briefing",
       "mcp__notifier_mcp__send_telegram_message",
+      "mcp__notifier_mcp__draft_telegram_section",
+      "mcp__notifier_mcp__send_drafted_telegram",
       "mcp__notifier_mcp__publish_dashboard",
       "mcp__notifier_mcp__backup_to_github",
       "mcp__notifier_mcp__list_recent_dashboards"

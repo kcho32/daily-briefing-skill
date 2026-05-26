@@ -247,44 +247,58 @@ AI 가 다음을 종합 판단:
 
 **위기·기회 동시 발동** → 위기 우선 (방어 우선). **기회·액션 동시** → 액션 모드로 표시하되 사이징에 기회 보정 반영.
 
-### Step 8. 텔레그램 요약 작성 + 발사
+### Step 8. 텔레그램 작성 + 발사 (섹션 단위 chunked draft)
 
-**모든 모드 동일한 풀 분량.** 길이는 자동 분할 (최대 4096자).
+**한 completion 에 한 섹션만 작성.** 전체 본문을 한 응답에서 다 만들면 stream timeout 으로 routine 이 stall (실측 확인됨 — Step 6 직후 ~ 송신 전 사이에서 30분 무응답).
 
-**Step 6 미체결 목록의 분류·재검증은 여기서**: 본문 6번 섹션 (과거 추천 추적) 작성하면서 각 미체결 항목을 시세 앵커·뉴스·thesis 변화로 보고 ✅/🔄/⚠️/⏰ 중 하나로 분류:
-- **🔄 유효** (오늘도 적극 권고 가능) → 6번 섹션에 한 줄 + **7번 섹션 (오늘의 액션) 에 carry-over 통합** (갱신된 진입/손절 가격 명시)
-- **⚠️ 미반영 + 유효** (사용자가 일부러 패스한 듯) → 6번 섹션에 짧은 리마인드만, 7번엔 포함 X
-- **⏰ 만료** (진입가 지나감 / thesis 깨짐) → 6번 섹션에 사유 한 줄, 다음 brief 부턴 안 나옴
-- **✅ 반영됨** → 한 줄 "✅" (분석 반복 금지)
+각 섹션을 별 turn 에서 `notifier_mcp.draft_telegram_section` 으로 서버 버퍼에 저장 → 모든 섹션 끝나면 `notifier_mcp.send_drafted_telegram` 으로 한 번 발사 (사용자엔 텔레그램 1개).
 
-판단 기준 자율 — 정해진 D+N 임계값 없음. 분류는 작성하면서 흘러가듯 결정 (별도 reasoning step 만들지 말 것).
+**Step 6 미체결 목록의 분류·재검증** 은 섹션 7 (과거 추천 추적) 작성 시 inline 으로:
+- 🔄 유효 → 섹션 7 한 줄 + **섹션 8 (오늘의 액션) 에 carry-over** (갱신된 진입/손절)
+- ⚠️ 미반영 + 유효 → 섹션 7 짧은 리마인드만
+- ⏰ 만료 → 섹션 7 사유 한 줄
+- ✅ 반영됨 → 한 줄 "✅"
 
-**섹션 (순서 고정):**
-1. 헤더: `📬 [날짜] ([요일]) — [모드]`
-2. 🌍 시장 (거시 5+3) + 환율 USD/KRW 한 줄
-3. 📊 역사 비교 한 줄
-4. 💼 포트폴리오 (총액 + 미국/한국 분리)
-5. 🚀/📉 오늘의 급등·급락 (AI 가 의미 있다고 판단한 종목)
-6. ✅/🔄/⚠️/⏰ 과거 추천 추적 + 재검증 (lookback 최근 ~7거래일)
-7. 🎯 오늘의 액션 (보유 종목 + 신규 후보 + 🔄 carry-over 통합, **시세 앵커 트리거 가격 명시**)
-8. 🆕 신규 매수 후보 (개수 자유) — 각 종목별 **narrative + 손절/익절/리스크** 명시
-9. 📋 매수 전 확인사항 — AI 가 narrative 로 작성 (환율·세금 영향·이벤트·시세 앵커 확인 등 사용자가 직접 점검할 항목들)
-10. 💰 세금 누적 + 잔여 공제
-11. 💵 매수가능 현금 + 다음 입금까지 D-X
-12. 📅 이번 주 일정
-13. 마지막에 "👇 자세한 분석은 대시보드에서"
+판단 기준 자율 — 정해진 D+N 임계값 없음.
+
+**섹션 (순서 고정, part_id 가 곧 순서):**
+
+| part_id | 섹션 |
+|---|---|
+| 1 | 헤더: `📬 [날짜] ([요일]) — [모드]` |
+| 2 | 🌍 시장 (거시 5+3) + 환율 USD/KRW |
+| 3 | 📊 역사 비교 한 줄 |
+| 4 | 💼 포트폴리오 (총액 + 미국/한국 분리) + 📊 상대성과 |
+| 5 | 📊 비중 모니터링 |
+| 6 | 🚀/📉 오늘의 급등·급락 |
+| 7 | ✅/🔄/⚠️/⏰ 과거 추천 추적 + 재검증 |
+| 8 | 🎯 오늘의 액션 (보유 + 🔄 carry-over) |
+| 9 | 🆕 신규 매수 후보 (narrative + 손절/익절/리스크) |
+| 10 | 📋 매수 전 확인사항 |
+| 11 | 💰 세금 누적 + 잔여 공제 |
+| 12 | 💵 매수가능 현금 + 다음 입금까지 D-X |
+| 13 | 📅 이번 주 일정 |
+| 14 | "👇 자세한 분석은 대시보드에서" 한 줄 |
+
+**호출 패턴 (강제):**
+
+```
+Turn 1:  섹션 1 작성 → draft_telegram_section(part_id=1, text=..., clear_first=True)
+Turn 2:  섹션 2 작성 → draft_telegram_section(part_id=2, text=...)
+Turn 3:  섹션 3 작성 → draft_telegram_section(part_id=3, text=...)
+...
+Turn 14: 섹션 14 작성 → draft_telegram_section(part_id=14, text=...)
+Turn 15: send_drafted_telegram()    ← 모든 섹션 합쳐 한 번 발사
+```
+
+**⚠️ 한 응답(completion)에서 여러 draft 병렬 호출 금지** — chunking 패턴이 무효화되어 stall 위험 재발. 한 섹션 작성 → 한 도구 호출 → 응답 수신 → *새 turn* 에서 다음 섹션. 매 draft 응답의 `next_action_hint` 가 이 룰을 reminder.
+
+**`clear_first=True` 는 첫 호출 (part_id=1) 에서만.** 이전 routine 이 중간에 죽었을 경우 stale draft 가 남아있을 수 있어 wipe.
 
 **HTML 태그만 사용** (Telegram parse_mode='HTML'):
 - 허용: `<b>`, `<i>`, `<a href>`, `<code>`, `<pre>`
 - 금지: `<div>`, `<span>`, `<style>` 등
 - `&` → `&amp;`, `<` → `&lt;`, `>` → `&gt;` 이스케이프 필수
-
-**작성 직후 즉시 발사** (한 completion 안에서 마무리):
-```
-notifier_mcp.send_telegram_message(text=<위 작성한 요약>)
-```
-
-> **왜 여기서 바로 보내나:** 텔레그램 본문과 HTML 대시보드를 한 completion 안에서 둘 다 생성하면 출력이 수만 자가 되어 Anthropic API 의 stream timeout 에 걸리고 routine 이 30분 무응답으로 멈춤. 텔레그램부터 발사하고 *다음 turn* 에서 HTML 을 생성·발행하는 게 핵심.
 
 ### Step 9. HTML 대시보드 작성 + 발행 (매일)
 
@@ -693,10 +707,11 @@ AI 가 종목 특성·시장 상황·사용자 컨텍스트를 종합해서 활�
 
 ## 작업 종료 후
 
-발송·백업은 **세 번의 별도 도구 호출** 로 분리 (Step 8 → 9 → 10). 한 번에 묶지 말 것:
+발송·백업 단계의 도구 호출 순서:
 
-1. `send_telegram_message` — 텔레그램 발사 (Step 8 끝)
-2. `publish_dashboard` — HTML 대시보드 발행 (Step 9 끝)
-3. `backup_to_github` — GitHub 백업 (Step 10)
+1. `draft_telegram_section` × N — Step 8 의 각 섹션 (한 섹션당 한 turn, **병렬 금지**)
+2. `send_drafted_telegram` — 모든 섹션 합쳐 텔레그램 1개 발사 (Step 8 마지막)
+3. `publish_dashboard` — HTML 대시보드 발행 (Step 9 끝)
+4. `backup_to_github` — GitHub 백업 (Step 10)
 
 각 호출이 별도 LLM turn 에서 일어나야 한 completion 이 짧게 유지되어 stream timeout 을 회피한다. 백업 결과는 사용자에게 별도 보고 불필요 (백그라운드 동작).
