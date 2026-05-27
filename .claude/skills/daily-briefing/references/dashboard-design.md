@@ -3,6 +3,8 @@
 **언제 읽나**: Step 9 (HTML 대시보드 작성) 진입 시. 매일 발행이므로 사실상 매일 1회.
 **역할**: 모바일 친화 다크 테마의 일관된 디자인 적용. 색상 코딩과 레이아웃 표준 통일.
 
+> **대시보드 = 진짜 풀 콘텐츠.** 텔레그램은 요약/trigger 일 뿐 — 사용자가 button 누르면 *여기서* 모든 디테일을 본다. 신규 후보 narrative, 사이즈 근거, 진입/손절/익절 가격, hidden risk, 매수 전 확인사항, 종목별 시세 분석 등 *모든 detail 은 대시보드에*. SKILL.md 본문이 "텔레그램엔 종목명·한 줄만" 이라고 한 것의 *반대편 책임* 을 진다.
+
 ---
 
 ## 디자인 원칙
@@ -59,13 +61,14 @@ body {
 | 모드 | 배경 | 텍스트 색 | 이모지 |
 |------|------|---------|------|
 | 위기 | `#5a1a1a` | `#ff7b72` | 🚨 |
+| 기회 | `#1a4a3a` | `#56d364` | 🟢 |
 | 액션 | `#1a3a5a` | `#58a6ff` | 🎯 |
 | 리마인드 | `#5a4a1a` | `#e3b341` | ⚠️ |
 | 안정 | `#1a4a2a` | `#56d364` | ✅ |
 
 ```html
 <div class="banner banner-crisis">
-  🚨 위기 시그널 — VIX 32, HY 스프레드 8.5%
+  🚨 위기 시그널 — [핵심 trigger 한 줄]
 </div>
 ```
 
@@ -77,6 +80,7 @@ body {
   font-weight: 600;
 }
 .banner-crisis   { background: #5a1a1a; color: #ff7b72; }
+.banner-opportunity { background: #1a4a3a; color: #56d364; }
 .banner-action   { background: #1a3a5a; color: #58a6ff; }
 .banner-remind   { background: #5a4a1a; color: #e3b341; }
 .banner-stable   { background: #1a4a2a; color: #56d364; }
@@ -88,22 +92,21 @@ body {
 
 대시보드 카드는 다음 순서로 배치:
 
-1. **헤더** (날짜, 모드 표시 배너)
-2. **거시 환경**: 8개 지표 표 + 위기 트리거 평가
-3. **역사 비교**: 한 줄 + 의미 설명
-4. **포트폴리오 현황** (3개 하위 카드):
-   - 4a. 미국 + 한국 분리 표
-   - 4b. **상대성과 카드** — 포트폴리오 vs S&P500 / NDX / SOXX / KOSPI 일일 변동률 + 핵심 벤치마크 대비 ±x.x%p
-   - 4c. **가드레일 카드** — 🔴 위험 / 🟠 경고 / 🟡 주의 단계별 표시 (없으면 ✅ 한 줄)
-5. **추천 반영 추적**: ✅/⚠️ 목록
-6. **보유 종목 분석**: AI 가 의미 있다고 판단한 변동 종목 + 주기적 리스크 점검 결과 — 없으면 "특이사항 없음"
-7. **매도/매수 추천**: 보유 종목 기준, 시세 앵커 트리거 가격 명시
-8. **🆕 신규 매수 후보** (개수 자유 — 1개 ~ 여러 개): 보유 외 매력적 종목. 각 후보별 **narrative 추천** (강점·약점·시세 앵커 기반 진입가/손절/익절·hidden risk·추천 비중). 점수표 없음.
-   - 8b. **🔍 AI 가 보류 권고한 후보 (조건부)** — AI 가 매력적이라고 판단했으나 timing·환율·이벤트·현금 같은 *맥락 요인* 으로 보류 권고한 후보가 있을 때만 렌더링. 보류 사유·한 줄 평 노출. 사용자가 직접 판단하도록 함.
+1. **헤더** (날짜, 모드 표시 배너 — 위기 시 핵심 trigger 한 줄)
+2. **거시 환경**: baseline 8개 지표 표 + AI 자율 추가 지표 + 위기·기회 시그널 평가 narrative
+3. **포트폴리오 현황** (3개 하위 카드):
+   - 3a. 미국 + 한국 분리 표 (종목별 평가손익·비중)
+   - 3b. **상대성과 카드** — 포트폴리오 vs S&P500 / NDX / SOXX / KOSPI 일일 변동률 + 핵심 벤치마크 대비 ±x.x%p
+   - 3c. **비중 모니터링 카드** — 🔴 위험 / 🟠 경고 / 🟡 주의 단계별 표시 (AI 자율 판단, 정해진 % 임계값 없음). 없으면 ✅ 한 줄
+4. **추천 추적**: ✅ 실행됨 / ⚠️ 미체결 유효. 각 종목별 *현재가·진입가·재검증 한 줄*
+5. **보유 종목 분석**: AI 가 의미 있다고 판단한 변동 종목 + 주기적 리스크 점검 결과 narrative. 없으면 "특이사항 없음"
+6. **🎯 오늘의 액션**: 모드별 (위기/액션/기회 등) — 보유 종목 기준 매도/매수, 시세 앵커 기반 진입/익절/손절 가격·근거 풀 narrative
+7. **🆕 신규 매수 후보** (최대 5개, 추천 강도 순): 각 후보별 **풀 narrative 추천** — 강점·약점 균형 평가, hidden risk, 시세 앵커 기반 진입가/손절/익절, 권고 사이즈 + 근거. 점수표 없음. 5개 채울 필요 없음.
+   - 7b. **🔍 AI 가 보류 권고한 후보 (조건부)** — AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 *맥락 요인* 으로 보류 권고한 후보가 있을 때만 렌더링. 보류 사유·한 줄 평 노출
+8. **📋 매수 전 확인사항**: AI 가 오늘 추천한 종목·매수 상황에 맞춰 narrative 체크 항목 — 환율·세금·이벤트·앵커·집중도 등
 9. **세금 시뮬레이션**: KIS + Kiwoom 합산, 공제 잔여, 예상 세금
-10. **이번 달 입금 가이드**: 다음 입금 D-X, 분배 추천
-11. **이번 주 일정**: FOMC, 어닝, 경제지표
-12. **회고 카드 (조건부)** — 월요일이면 7일 회고 / 매월 1일이면 30일 회고. 적중률 + 평균 수익률 + 실패 카테고리 분포
+10. **현금/입금 가이드**: 매수가능 현금. 신규 입금 감지 시 분배 추천 별도 강조
+11. **이번 주 일정**: FOMC, 어닝, 경제지표 narrative
 
 ---
 
@@ -135,27 +138,49 @@ body {
 
 ---
 
-## 카드 + 배지 패턴 (신규 후보 노출용)
+## 신규 후보 카드 패턴 (풀 narrative)
+
+대시보드의 신규 매수 후보 섹션 (7번) 은 *진짜 풀 디테일* — 텔레그램이 한 줄로 요약한 그 내용. 각 후보 카드:
 
 ```html
-<div class="card">
+<div class="card candidate-card">
   <div class="card-title">
-    [종목] <span class="badge badge-attract">매력 N/6</span>
+    [순위]. [종목] ([티커])
   </div>
   <div class="card-body">
-    현재가 $[값] · 목표가 $[값] (+[%]) · 비중 추천 [%]
-    <br><span class="muted">🔻 리스크: [현재 상태 1줄]</span>
+    <div class="narrative"><b>추천 사유:</b> [한 줄 요약]</div>
+
+    <div class="narrative" style="margin-top:8px;">
+      <b>강점:</b> [narrative 한두 줄 — 펀더·밸류·모멘텀·catalyst 중 결정적인 것]
+    </div>
+    <div class="narrative">
+      <b>약점:</b> [narrative 한두 줄 — cherry-pick 금지]
+    </div>
+    <div class="narrative">
+      <b>Hidden risk:</b> [한 줄 — 의무 표기]
+    </div>
+
+    <table class="data-table" style="margin-top:8px;">
+      <tr><td>진입가</td><td>[값] (근거: [앵커 조합])</td></tr>
+      <tr><td>손절</td><td class="down">[값]</td></tr>
+      <tr><td>익절</td><td class="up">[값]</td></tr>
+    </table>
+
+    <div class="narrative" style="margin-top:8px;">
+      <b>권고 사이즈:</b> [액수 / 주수]<br>
+      <span class="muted">근거: [모드·컨빅션·변동성·세금·노출 narrative 한두 줄]</span>
+    </div>
   </div>
 </div>
 ```
 
 ```css
-.badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; }
-.badge-attract { background: rgba(86, 211, 100, 0.15); color: var(--green); }
-.badge-risk    { background: rgba(248, 81, 73, 0.15); color: var(--red); }
-.badge-neutral { background: rgba(139, 148, 158, 0.15); color: var(--gray); }
+.candidate-card { border-left: 3px solid var(--accent); }
+.narrative { font-size: 13px; line-height: 1.6; margin: 4px 0; }
 .muted { color: var(--text-muted); font-size: 12px; }
 ```
+
+**점수표·매력 N/M 배지 금지** — narrative 로만 매력도 표현. 순위는 추천 강도 순 정렬로 표시 (1위가 가장 강한 추천).
 
 ---
 
@@ -178,31 +203,31 @@ body {
 
 ---
 
-## 가드레일 카드 패턴 (4c)
+## 비중 모니터링 카드 패턴 (3c)
 
-3단계를 색상으로 구분. 같은 색 코드를 banner 와 일치.
+3단계를 색상으로 구분. 같은 색 코드를 banner 와 일치. **% 임계값 없음** — AI 가 portfolio 컨텍스트·종목 성격 보고 자율 판단.
 
 ```html
 <div class="card">
-  <div class="card-title">🛡️ 포트폴리오 가드레일</div>
-  <div class="guardrail-row guardrail-danger">🔴 위험: [항목] [값] ([어느 한도 초과]) · D+[N]</div>
-  <div class="guardrail-row guardrail-warn">🟠 경고: [항목] [값]</div>
-  <div class="guardrail-row guardrail-caution">🟡 주의: [항목] [값] ([어느 구간])</div>
+  <div class="card-title">📊 포트폴리오 비중 모니터링</div>
+  <div class="weight-row weight-danger">🔴 위험: [항목] [값] — [한 줄 사유]</div>
+  <div class="weight-row weight-warn">🟠 경고: [항목] [값] — [한 줄 사유]</div>
+  <div class="weight-row weight-caution">🟡 주의: [항목] [값] — [한 줄 사유]</div>
 </div>
 ```
 
 ```css
-.guardrail-row    { padding: 6px 8px; border-radius: 4px; margin: 4px 0; font-size: 13px; }
-.guardrail-danger { background: rgba(248, 81, 73, 0.15); color: var(--red); }
-.guardrail-warn   { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
-.guardrail-caution{ background: rgba(139, 148, 158, 0.15); color: var(--text-muted); }
+.weight-row     { padding: 6px 8px; border-radius: 4px; margin: 4px 0; font-size: 13px; }
+.weight-danger  { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+.weight-warn    { background: rgba(227, 179, 65, 0.15); color: var(--yellow); }
+.weight-caution { background: rgba(139, 148, 158, 0.15); color: var(--text-muted); }
 ```
 
-위반 0건이면 카드 본문에 한 줄: `<div class="up">✅ 모든 한도 내</div>`.
+해당 단계 없으면 줄 생략. 전혀 없으면 카드 본문에 한 줄: `<div class="up">✅ 모든 항목 안정</div>`.
 
 ---
 
-## 상대성과 카드 패턴 (4b)
+## 상대성과 카드 패턴 (3b)
 
 ```html
 <div class="card">
@@ -219,7 +244,7 @@ body {
 
 ---
 
-## AI 가 보류 권고한 후보 카드 패턴 (8b, 조건부)
+## AI 가 보류 권고한 후보 카드 패턴 (7b, 조건부)
 
 AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 *맥락* 요인으로 보류 권고한 후보가 있을 때만 렌더링.
 없으면 카드 자체 생략.
@@ -240,35 +265,7 @@ AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 
 </div>
 ```
 
----
-
-## 회고 카드 패턴 (12, 조건부)
-
-월요일이면 7일 / 매월 1일이면 30일. 평일에는 카드 자체 미렌더링.
-
-```html
-<div class="card">
-  <div class="card-title">📊 주간 추천 회고 (YYYY-MM-DD ~ YYYY-MM-DD)</div>
-  <div>추천 매수 [N] / 매도 [N] / 보류 [N] · 적중률 [A]/[B] ([%])</div>
-  <div>평균 수익률 [%] (벤치마크 대비 [%]p)</div>
-
-  <div class="card-title" style="margin-top:12px;">🟢 잘 된 추천</div>
-  <table class="data-table">
-    <tr><td>[종목]</td><td class="up">+[%]</td><td class="muted">[적중 원인 narrative]</td></tr>
-  </table>
-
-  <div class="card-title" style="margin-top:12px;">🔴 실패한 추천</div>
-  <table class="data-table">
-    <tr>
-      <td>[종목]</td>
-      <td class="down">−[%]</td>
-      <td class="muted">실패 카테고리: [거시 오판/리스크 누락/이벤트 직전/타이밍]</td>
-    </tr>
-  </table>
-
-  <div class="muted" style="margin-top:8px;">💡 학습: [회고에서 도출한 패턴 1줄]</div>
-</div>
-```
+> **회고는 별도 `retro` skill 의 대시보드에** — daily-briefing 대시보드엔 회고 카드 없음.
 
 ---
 
@@ -288,14 +285,15 @@ AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 
 ## 출력 검증
 
 대시보드 작성 후 다음 자체 점검:
-- [ ] 11(+1) 표준 섹션 순서대로 배치됐는가 (12는 월요일/매월 1일만)
-- [ ] 모드별 배너가 최상단에 있는가
+- [ ] 11개 표준 섹션 순서대로 배치됐는가
+- [ ] 모드별 배너가 최상단에 있는가 (위기 시 핵심 trigger 한 줄 포함)
 - [ ] 색상 코딩이 의미(상승/하락/주의/중립)에 맞는가
 - [ ] 모바일 폭(320px)에서 표가 잘리지 않는가
 - [ ] 시세 앵커 트리거 가격이 숫자로 명시됐는가
 - [ ] `anchors_source` 가 stale 이면 표기됐는가
-- [ ] **4b 상대성과 카드** 가 포트폴리오 안에 있는가 (S&P/NDX/SOXX 비교)
-- [ ] **4c 가드레일 카드** 가 3단계 색상으로 표시되는가
-- [ ] 신규 매수 후보(8번)에 종목별 narrative 추천이 들어있는가 (강점·약점·진입가·손절·익절·리스크·비중)
-- [ ] AI 가 보류 권고한 후보(8b)가 있으면 사유와 한 줄 평이 명시됐는가
-- [ ] 오늘이 월요일/매월 1일이면 **12번 회고 카드** 가 렌더링됐는가
+- [ ] **3b 상대성과 카드** 가 포트폴리오 안에 있는가 (S&P/NDX/SOXX 비교)
+- [ ] **3c 비중 모니터링 카드** 가 3단계 색상으로 표시되는가 (AI 자율 판단, % 임계값 없음)
+- [ ] **신규 매수 후보 카드(7번)** 가 종목별 풀 narrative 인가 (추천 사유·강점·약점·hidden risk·진입/손절/익절·권고 사이즈+근거). 점수표·매력 N/M 배지 없음. 최대 5개, 추천 강도 순.
+- [ ] AI 가 보류 권고한 후보(7b) 있으면 사유와 한 줄 평 명시됐는가
+- [ ] 매수 전 확인사항(8번) narrative 가 오늘 추천에 맞춰 작성됐는가
+- [ ] 텔레그램이 한 줄만 요약한 detail 들이 *모두 대시보드에* 들어있는가 (사용자가 텔레그램 button 누르면 충분한 정보 얻을 수 있게)
