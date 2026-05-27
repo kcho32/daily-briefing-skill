@@ -103,7 +103,16 @@ morning daily-briefing 의 Step 6 와 동일 패턴.
 
 종목당 narrative *짧게* (한 줄 사유 + hidden risk 한 줄 + 진입가 한 줄 + 사이즈 한 줄).
 
-매력 약하면 빼라 — filler 금지 (morning 과 동일 원칙). carry-over 가 3위 밖으로 밀려나면 silent expire.
+**⚠️ Pre-market 엄격성** (evening 의 핵심 디시플린):
+- evening 은 US 개장 30분 전이라 *시간 압박* 으로 충동 추천이 위험. morning 보다 *더 보수적* 으로 판단.
+- **뉴스 하나만으로 신규 진입 권고 금지** — 어닝 비트·상향 단발성 catalyst 만 있고 가격·유동성·포트폴리오 중복 미확인이면 → "관찰 권고" 로 표기, 신규 액션 list 에 *넣지 말 것* (다음 morning brief 에서 깊은 검토).
+- 신규 진입 권고하려면 다음을 한 번에 확인:
+  - 가격 위치 (52w·MA 대비, 오늘 pre-market 흐름)
+  - 유동성 (충분한 거래량)
+  - 사용자 포트폴리오 중복 (이미 보유한 비슷한 노출 있는지)
+  - 이상 없을 때만 진입 권고
+
+매력 약하면 빼라 — filler 금지 (morning 과 동일 원칙). **추천 0개도 정상** (morning 추천 그대로 진행이 베스트일 수 있음). carry-over 가 3위 밖으로 밀려나면 silent expire.
 
 ### Step 6. evening 모드 결정
 

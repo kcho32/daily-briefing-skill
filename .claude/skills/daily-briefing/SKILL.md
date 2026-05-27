@@ -132,6 +132,11 @@ Step 2 거시 데이터 + 포트폴리오 일일 변동 + Step 1 시장 신호 +
 
 **원칙: 양방향.** AI 의 default 는 공포 탐지에 편향됨 — 의식적으로 *위기 시그널과 기회 시그널을 동등하게* 능동 탐지. 비대칭 회피가 이 step 의 존재 이유.
 
+**참고 cluster (하드 임계값 아님 — 단일 지표 자동 판정 X):**
+- *위기 가능성 cluster*: VIX 급등 + HY 스프레드 확대 + 주요 지수 동반 하락 + 포트폴리오 고베타 종목 급락 등이 *동시·연속* 발생하면 위기 가능성 ↑
+- *기회 cluster*: VIX 급반전 + HY 스프레드 정상 + 패닉 매도 (오버리액션 의심) + 보유/후보 종목 catalyst 등이 함께 보이면 기회 가능성 ↑
+- 단일 지표 한두 개만으로 자동 위기/기회 판정하지 말 것 — *clustering* + AI 자체 정황 판단으로
+
 **판단 결과:**
 - 위기 강함 → **위기 모드** → `references/crisis-playbook.md` Read → 디리스크 톤
 - 기회 강함 → **기회 모드** → 평상보다 적극 배치 검토
@@ -160,15 +165,43 @@ AI 가 다음을 종합 판단:
 
 출력: 신호 발견 시 `⚠️ [종목] 점검: [카테고리] — [내용·후속 영향 1줄]` / 없으면 `🔍 [종목] 점검: 특이사항 없음`
 
-### Step 5b. 추천 매수 list 구성 (fresh 발굴 + Step 6 carry-over 통합)
+### Step 5b. 과거 추천 추적 (execution check + carry-over 추출)
+
+**목적 (2가지):**
+1. **✅ 실행 확인** — 직전 brief 이후 실행된 trade 가 있는지
+2. **🔄 carry-over 추출** — 미체결인데 *오늘도 유효한* 종목을 Step 6 의 *input* 으로 넘김 (Step 6 의 추천 list 에 통합되어 fresh 종목과 *경쟁*)
+
+```
+1. notifier_mcp.list_recent_dashboards(limit=5)
+   → 가장 최근 *이전 brief* 의 created_at timestamp 확보 (= "직전 brief 시각")
+2. 각 과거 추천 종목을 get_trading_history 와 대조:
+   - **실행됨 + trade_date 가 직전 brief 이후** → ✅ list 에 한 줄 (방금 실행된 것만)
+   - **실행됨 + trade_date 가 직전 brief 이전** → silent drop (이미 과거 brief 에서 ✅ 표시 완료)
+   - **미체결** → 시세 앵커로 *간단 유효성 체크*:
+     - 오늘 시세 보고 명백히 무효 (가격 한참 지나감 / thesis 깨짐) → silent drop (만료)
+     - 그 외 → **carry-over list** 에 추가 (종목·처음 추천일·추천 가격·현재가·간단 사유). Step 6 이 이 list 를 *fresh 발굴 결과와 합쳐* 통합 ranking 함.
+3. 중복 제거: 같은 종목 반복 추천 시 가장 최신 1개만
+```
+
+**Step 5b 의 결과:**
+- ✅ list (실행 확인용, 텔레그램 섹션 6 에 한 줄씩 표시)
+- 🔄 carry-over list (Step 6 에 input, *별도 섹션 표시 X* — Step 8 의 🎯 추천 매수 list 에 통합)
+
+**판단 가볍게** — thesis 깊은 재검토 X. "오늘 시세 보고 명백히 무효인가?" 정도. 정해진 D+N 임계값 없음.
+
+> **회고는 별도 `retro` skill** 이 매주 일요일 21:00 KST 단일 cron 으로 독립 실행 (그 달 첫째 일요일이면 30일 회고로 자동 승격). daily-briefing 본문에는 포함하지 않음. 가장 최근 회고 대시보드 링크는 텔레그램 어제 추천 추적 섹션 옆에 한 줄로 표기 가능 (선택).
+
+### Step 6. 추천 매수 list 구성 (fresh 발굴 + Step 5b carry-over 통합)
 
 **보유 종목 분석으로 끝내지 말 것. 매일 매수 후보를 발굴·평가해서 narrative 로 추천한다.**
 
+> **⚠️ 추천 0개도 정상이다.** 매일 "뭔가 추천해야 한다" 압박 X. fresh 발굴 결과 + Step 5b carry-over 둘 다 *오늘 매력 약하면* 추천 매수 list 자체를 생략 — 한 줄로 "오늘은 신규/추가 매수 권장 없음 — 현금 보유가 최선" 으로 끝. **과매매 방지의 핵심.** filler 금지는 강조하지만 0개로 끝나는 brief 가 더 좋은 brief 일 수 있음.
+
 **입력 두 가지 통합:**
 1. **Fresh 발굴** — 오늘 발견한 신규 종목 (아래 발굴 전략대로)
-2. **Step 6 의 carry-over list** — 미체결+유효 과거 추천 종목
+2. **Step 5b 의 carry-over list** — 미체결+유효 과거 추천 종목
 
-→ 두 source 의 종목들을 *통합 ranking*. 추천 강도 순으로 정렬해서 최대 5개. carry-over 라고 자동으로 위/아래 가는 게 아니라 *오늘 기준 매력도로 새 경쟁*. 강하면 #1, 약해졌으면 5위권 밖 → silent expire.
+→ 두 source 의 종목들을 *통합 ranking*. 추천 강도 순으로 정렬해서 *최대* 5개. carry-over 라고 자동으로 위/아래 가는 게 아니라 *오늘 기준 매력도로 새 경쟁*. 강하면 #1, 약해졌으면 5위권 밖 → silent expire.
 
 **가용 도구:**
 - portfolio_mcp 저평가 스크리닝 (`get_stock_candidates` / `get_kr_stock_candidates`)
@@ -179,9 +212,9 @@ AI 가 다음을 종합 판단:
 
 > **검색 직후 fresh 후보당 1줄 압축 → 원문 carry X** (안정성 규칙 § 검색 결과 즉시 압축 참조). 강점·약점·hidden risk narrative 는 *최종 통합 list 최대 5개* 에 대해 Step 8 에서. **추천 강도 순 (가장 강한 추천이 위) 으로 정렬.**
 
-> **"최대 5개" 는 채울 필요 없음.** 진짜 매력적인 후보가 2개면 2개, 3개면 3개. *filler 금지* — 단순 분산·섹터 채움·5개 채우기 명목으로 약한 후보 끼워넣지 말 것. 매력 약하면 보류 섹션에도 안 넣고 그냥 *제외*.
+> **"최대 5개" 는 채울 필요 없음.** 진짜 매력적인 후보가 2개면 2개, 3개면 3개, **0개도 OK**. *filler 금지* — 단순 분산·섹터 채움·5개 채우기 명목으로 약한 후보 끼워넣지 말 것.
 
-> **Carry-over 표기**: Step 6 carry-over 입력으로 들어온 종목이 최종 list 에 포함되면 narrative 에 `(carry-over, Day N: 처음 추천 [날짜])` 표기 — 사용자가 신규 vs 계속 추천 구분 가능. 단순 carry-over 라고 자동 boost X — fresh 종목과 *동등하게* 추천 강도로 ranking.
+> **Carry-over 표기**: Step 5b carry-over 입력으로 들어온 종목이 최종 list 에 포함되면 narrative 에 `(carry-over, Day N: 처음 추천 [날짜])` 표기 — 사용자가 신규 vs 계속 추천 구분 가능. 단순 carry-over 라고 자동 boost X — fresh 종목과 *동등하게* 추천 강도로 ranking.
 
 > **Carry-over 가 list 밖으로 밀려나면**: silent expire (별도 알림 없이 다음 brief 부턴 안 등장). "어제 추천했던 X 가 오늘 안 보이네?" = "오늘 기준 top 5 매력도 밖" 으로 사용자가 자연스럽게 해석.
 
@@ -205,7 +238,7 @@ AI 가 다음을 종합 판단:
 - `references/buying-framework.md` — 한국 세금 구조, 사용자 공제 상태, 한국 비과세 ETF 코드, 데이터 통로
 
 **최종 출력 (🎯 추천 매수 list):**
-- **최대 5개 (fresh + carry-over 통합), 추천 강도 순 정렬**
+- **최대 5개 (fresh + carry-over 통합), 추천 강도 순 정렬**. 0개도 OK (위 강조 참조).
 - 각 항목별로:
   - 종목명 + `(NEW)` 또는 `(carry-over, Day N)` 표기 + 한 줄 추천 사유
   - 강점·약점 narrative (균형, 점수 X)
@@ -215,32 +248,6 @@ AI 가 다음을 종합 판단:
   - 분할 매수 일정 (있으면)
 - 보유 종목 추가 매수 vs 신규/carry-over 매수 비교 의견
 - AI 가 보류 권고하는 후보가 있으면 사유와 함께 별도 노출 (정보 손실 방지)
-
-### Step 6. 과거 추천 추적 (execution check + carry-over 추출)
-
-**목적 (2가지):**
-1. **✅ 실행 확인** — 직전 brief 이후 실행된 trade 가 있는지
-2. **🔄 carry-over 추출** — 미체결인데 *오늘도 유효한* 종목을 Step 5b 의 *input* 으로 넘김 (Step 5b 의 추천 list 에 통합되어 fresh 종목과 *경쟁*)
-
-```
-1. notifier_mcp.list_recent_dashboards(limit=5)
-   → 가장 최근 *이전 brief* 의 created_at timestamp 확보 (= "직전 brief 시각")
-2. 각 과거 추천 종목을 get_trading_history 와 대조:
-   - **실행됨 + trade_date 가 직전 brief 이후** → ✅ list 에 한 줄 (방금 실행된 것만)
-   - **실행됨 + trade_date 가 직전 brief 이전** → silent drop (이미 과거 brief 에서 ✅ 표시 완료)
-   - **미체결** → 시세 앵커로 *간단 유효성 체크*:
-     - 오늘 시세 보고 명백히 무효 (가격 한참 지나감 / thesis 깨짐) → silent drop (만료)
-     - 그 외 → **carry-over list** 에 추가 (종목·처음 추천일·추천 가격·현재가·간단 사유). Step 5b 가 이 list 를 *fresh 발굴 결과와 합쳐* 통합 ranking 함.
-3. 중복 제거: 같은 종목 반복 추천 시 가장 최신 1개만
-```
-
-**Step 6 의 결과:**
-- ✅ list (실행 확인용, 텔레그램 섹션 6 에 한 줄씩 표시)
-- 🔄 carry-over list (Step 5b 에 input, *별도 섹션 표시 X* — Step 8 의 🎯 추천 매수 list 에 통합)
-
-**판단 가볍게** — thesis 깊은 재검토 X. "오늘 시세 보고 명백히 무효인가?" 정도. 정해진 D+N 임계값 없음.
-
-> **회고는 별도 `retro` skill** 이 매주 일요일 21:00 KST 단일 cron 으로 독립 실행 (그 달 첫째 일요일이면 30일 회고로 자동 승격). daily-briefing 본문에는 포함하지 않음. 가장 최근 회고 대시보드 링크는 텔레그램 어제 추천 추적 섹션 옆에 한 줄로 표기 가능 (선택).
 
 ### Step 7. 모드 결정 (분량 일정, 헤더·톤만 차이)
 

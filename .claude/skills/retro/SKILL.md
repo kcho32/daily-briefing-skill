@@ -144,62 +144,38 @@ notifier_mcp.list_recent_dashboards(limit=N)
 
 매 회고마다 PR 만들지 않음. 별 패턴 없으면 회고 narrative 에 "이번 [주/달] 특이 패턴 없음" 한 줄로 끝.
 
-### Step 7. 텔레그램 회고 메시지 작성 + 발사
+### Step 7. 텔레그램 회고 메시지 작성 (chunked draft)
 
-**모드 동일 풀 분량.** 7일/30일 차이는 마지막의 *카테고리별 분석 + 다음 달 개선* 섹션 유무. Step 6 에서 PR 이 생성됐다면 URL·브랜치명 본문에 반영.
+morning daily-briefing 과 동일 chunked draft 패턴 — 한 completion 에 한 섹션만 작성, `notifier_mcp.draft_telegram_section` 으로 버퍼에 누적. 발사는 Step 9 에서 대시보드 URL button 과 함께.
 
-**섹션 (순서 고정):**
+**섹션 (순서 고정, part_id 가 곧 순서):**
+
+| part_id | 섹션 |
+|---|---|
+| 1 | 헤더: `📊 [주간/월간] 추천 회고 ([기간])` |
+| 2 | 📈 통계 (추천건수·적중률·평균 수익률·벤치마크 대비·실행률) |
+| 3 | 🟢 잘 된 추천 — 종목별 한 줄 (종목·추천일·현재 [+/-X%]·적중 원인 한 줄) |
+| 4 | 🔴 실패한 추천 — 종목별 한 줄 (종목·추천일·현재 [+/-X%]·실패 원인 한 줄) |
+| 5 | 📌 이번 [주/달] 학습 — narrative 1~2줄 |
+| 6 | (30일 회고만) 🎯 실패 원인 분석 + 💡 다음 달 개선 — 한 묶음, narrative 2~3줄 |
+| 7 | (Step 6 PR 생성 시) 🔧 개선 PR 정보 — 브랜치명 + 한 줄 요약 (PR URL 은 button 으로 들어가므로 텍스트엔 한 줄만) |
+
+**호출 패턴 (강제, 병렬 X):**
 
 ```
-📊 [주간/월간] 추천 회고 (YYYY-MM-DD ~ YYYY-MM-DD)
-
-📈 통계
-• 추천 건수: 매수 X / 매도 Y / 보류 Z
-• 적중률: A/B (양의 수익률 비율)
-• 평균 수익률: +/-x.x% (벤치마크 대비 +/-x.x%p)
-• 실행률: M/N (추천 중 실제 매매한 비율)
-
-🟢 잘 된 추천
-• [종목] 추천일 YYYY-MM-DD, 현재 +x.x% (벤치마크 대비 +x.x%p)
-  → 적중 원인: [narrative 1줄 — 펀더 강세·catalyst·거시 정합 등]
-• [반복...]
-
-🔴 실패한 추천
-• [종목] 추천일 YYYY-MM-DD, 현재 -x.x% (벤치마크 대비 -x.x%p)
-  → 실패 원인: [narrative 1줄 — AI 가 자유 분류]
-• [반복...]
-
-📌 이번 [주/달] 학습
-[반복 패턴 또는 통찰 narrative 1~2줄]
-
-[30일 회고일 때만 추가:]
-🎯 실패 원인 분석
-[월간 실패 사례 묶어서 공통 원인 narrative]
-
-💡 다음 달 개선
-[AI 도출 통찰 — 어떻게 다르게 reasoning 할지]
-
-[Step 6 에서 PR 생성한 경우 추가:]
-🔧 개선 PR 생성됨
-• 브랜치: retro/YYYY-MM-DD-<주제>
-• 변경: [한 줄 요약]
-• Review: <PR URL>
-
-👇 자세한 분석은 대시보드에서
+Turn 1: draft_telegram_section(part_id=1, text=<헤더>, clear_first=True)
+Turn 2: draft_telegram_section(part_id=2, text=<통계>)
+...
+[모든 섹션 끝나면 Step 8 진입]
 ```
 
-**HTML 태그만** (Telegram parse_mode='HTML'): `<b>`, `<i>`, `<a href>`, `<code>`, `<pre>` 만 허용. `&` `<` `>` 이스케이프 필수.
+**HTML 태그만** (Telegram parse_mode='HTML'): `<b>`, `<i>`, `<a href>`, `<code>`, `<pre>`. `&` `<` `>` 이스케이프 필수.
 
-**작성 직후 즉시 발사:**
-```
-notifier_mcp.send_telegram_message(text=<위 작성한 회고 본문>)
-```
-
-> **왜 여기서 바로 보내나:** 회고 텔레그램과 HTML 회고 대시보드를 한 completion 안에서 둘 다 생성하면 출력이 길어져 Anthropic API 의 stream timeout 에 걸려 routine 이 무응답으로 멈춤. 텔레그램부터 발사하고 *다음 turn* 에서 HTML 을 생성·발행.
+**⚠️ 한 응답에서 여러 draft 병렬 호출 금지** — chunking 무효화. 한 섹션 → 한 도구 호출 → 응답 받고 새 turn.
 
 ### Step 8. HTML 회고 대시보드 작성 + 발행
 
-**Step 7 의 텔레그램 발송이 완료된 다음 turn 에서 진입.** 같은 completion 안에서 텔레그램 + HTML 둘 다 만들지 말 것.
+**Step 7 의 모든 draft 가 buffer 에 쌓인 후 진입.** 텔레그램 발사는 *아직 안 함* (Step 9 에서 대시보드 URL button 과 함께).
 
 영구 보존용. daily-briefing 의 dashboard-design 과 일관된 톤이지만 회고 전용 구조:
 
@@ -210,20 +186,31 @@ notifier_mcp.send_telegram_message(text=<위 작성한 회고 본문>)
 4. 잘 된 추천 — 종목별 narrative 카드
 5. 실패한 추천 — 종목별 narrative 카드
 6. 패턴 분석 (30일 회고만)
-7. 개선 PR 링크 (생성 시)
+7. 개선 PR 링크 (생성 시) — Step 6 PR URL
 
 스타일은 daily-briefing 대시보드와 동일 CSS 변수·색상 코딩 사용.
 
-**작성 직후 즉시 발행:**
+**작성 직후 즉시 발행 + URL 추출:**
 ```
-notifier_mcp.publish_dashboard(
+result = notifier_mcp.publish_dashboard(
     html=<HTML>,
     title="<주간/월간> 회고 YYYY-MM-DD",
     date="YYYY-MM-DD"
 )
+dashboard_url = result["url"]
 ```
 
-### Step 9. GitHub 백업
+### Step 9. 텔레그램 발사 (대시보드 URL button 포함)
+
+```
+notifier_mcp.send_drafted_telegram(
+    buttons=[[{"text": "📊 회고 대시보드 보기", "url": <dashboard_url>}]]
+)
+```
+
+이 호출이 Step 7 의 버퍼된 모든 섹션을 합쳐서 button 과 함께 사용자에게 1개 텔레그램 발사.
+
+### Step 10. GitHub 백업
 
 ```
 notifier_mcp.backup_to_github()
@@ -261,10 +248,11 @@ notifier_mcp.backup_to_github()
 
 ## 작업 종료 후
 
-발송·백업은 **세 번의 별도 도구 호출** 로 분리 (Step 7 → 8 → 9). 한 번에 묶지 말 것:
+발송·백업 단계 도구 호출 순서 (Step 7 → 8 → 9 → 10):
 
-1. `send_telegram_message` — 텔레그램 회고 발사 (Step 7 끝, PR 정보 포함)
-2. `publish_dashboard` — HTML 회고 대시보드 발행 (Step 8 끝)
-3. `backup_to_github` — GitHub 백업 (Step 9)
+1. `draft_telegram_section` × N (보통 5~7개) — Step 7 의 각 섹션 (한 섹션당 한 turn, **병렬 금지**)
+2. `publish_dashboard` — Step 8. HTML 회고 대시보드 발행 → response 에서 `url` 추출
+3. `send_drafted_telegram(buttons=[[{text, url}]])` — Step 9. 버퍼된 섹션을 모두 합쳐 대시보드 URL button 과 함께 1개 발사
+4. `backup_to_github` — Step 10
 
-각 호출이 별도 LLM turn 에서 일어나야 한 completion 이 짧게 유지되어 stream timeout 을 회피한다.
+**핵심 순서**: dashboard publish → telegram send (URL button 을 텔레그램에 넣기 위함). morning daily-briefing 과 같은 패턴.
