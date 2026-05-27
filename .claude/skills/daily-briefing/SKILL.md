@@ -208,21 +208,25 @@ AI 가 다음을 종합 판단:
 - 보유 종목 추가 매수 vs 신규 후보 매수 비교 의견
 - AI 가 보류 권고하는 후보가 있으면 사유와 함께 별도 노출 (정보 손실 방지)
 
-### Step 6. 과거 추천 추적 (mechanical, 2-state)
+### Step 6. 과거 추천 추적 (mechanical, 2-state, 시간 필터)
 
 **목적: 실행 여부 + 미체결 유효성만.** 재분석·carry-over·만료 narrative X.
 오늘 봐도 좋은 종목은 어차피 Step 5b 가 fresh 후보로 다시 surface 함.
 
 ```
 1. notifier_mcp.list_recent_dashboards(limit=5)
+   → 가장 최근 *이전 brief* 의 created_at timestamp 확보 (= "직전 brief 시각")
 2. 각 추천을 get_trading_history 와 대조:
-   - 실행됨 → ✅ 한 줄 (분석 반복 X)
+   - **실행됨 + trade_date 가 직전 brief 이후** → ✅ 한 줄 (방금 실행된 것만)
+   - **실행됨 + trade_date 가 직전 brief 이전** → *silent drop* (이미 과거 brief 에서 ✅ 표시 완료, 반복 표시 X)
    - 미체결 → 시세 앵커로 *간단 유효성 체크*:
      - 오늘 시세 보고 명백히 무효 (가격 한참 지나감 / thesis 깨짐) 가 아니면
        → ⚠️ 한 줄 (종목 · 진입가 · 현재가 명시)
      - 명백히 무효 → silent drop (다음 brief 부턴 안 나옴)
 3. 중복 제거: 같은 종목 반복 추천 시 가장 최신 1개만
 ```
+
+**"신선한 ✅ 만"** — 같은 trade 가 매일 반복 표시되는 문제 방지. 사용자는 이미 이전 brief 에서 그 ✅ 를 봤음.
 
 **판단 가볍게** — thesis 깊은 재검토 X. 시세 앵커 한 번 보고 "여전히 진입 범위인가" 정도. 정해진 D+N 임계값 없음.
 
