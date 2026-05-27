@@ -195,6 +195,31 @@ body {
 
 **NEW vs carry-over** 라벨은 *origin 표시일 뿐* ranking 영향 X — 매일 fresh 와 carry-over 가 동등하게 경쟁해서 ranking. carry-over 가 5위권 밖으로 밀려나면 silent expire.
 
+### 추천 0개일 때 카드 (과매매 방지 강조)
+
+오늘 fresh + carry-over 통합 결과 추천할 만한 종목이 *0개* 일 때 — 섹션 자체를 생략하지 말고 *명시적으로 0개임을 표시*. 사용자가 "AI 가 분석 안 했나?" 오해 방지 + 현금 보유가 정당한 선택임을 강조:
+
+```html
+<div class="card candidate-card candidate-empty">
+  <div class="card-title">🆕 추천 매수 후보</div>
+  <div class="narrative">
+    <b>오늘은 신규/추가 매수 권장 없음.</b><br>
+    fresh 발굴 + carry-over 통합 결과 *오늘 기준 진입 매력이 충분한 후보 없음*.
+    현금 보유가 최선으로 판단.
+  </div>
+  <div class="narrative muted" style="margin-top:6px;">
+    💡 추천 0개는 정상. 매일 액션이 있어야 한다는 압박은 과매매 위험.
+    내일 brief 에서 새 catalyst 보고 재검토.
+  </div>
+</div>
+```
+
+```css
+.candidate-empty { border-left-color: var(--text-muted); }
+```
+
+매력적인 후보가 1개라도 있으면 일반 카드 사용. 0개 케이스 전용 패턴.
+
 ---
 
 ## 시세 앵커 트리거 가격 표시 패턴
