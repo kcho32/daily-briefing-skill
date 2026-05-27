@@ -68,31 +68,42 @@ morning daily-briefing 과 동일 원칙. 핵심:
 - 미국 경제지표 발표·FOMC·어닝 등 *오늘 발표됐거나 내일 예정* 인 것
 - 1줄 압축
 
-### Step 4. Morning 추천 재검증 (가벼움, 시간 필터)
+### Step 4. Morning 추천 재검증 (execution check + carry-over 추출)
 
-각 morning 추천 종목에 대해:
+morning daily-briefing 의 Step 6 와 동일 패턴.
 
+**목적 (2가지):**
+1. **✅ 실행 확인** — morning brief 시각 이후 사용자가 실행한 trade
+2. **🔄 carry-over 추출** — morning 추천 중 미체결+유효 종목을 Step 5 (신규 액션 도출) 의 *input* 으로 넘김. evening 의 추천 list 에 fresh 와 통합 ranking.
+
+```
 1. **실행 여부 확인** (trading_history 와 대조):
-   - **morning brief 시각 이후 ~ 지금 사이 (오늘 KRX 시간 + 그 직후)** 에 실행됨 → ✅ 한 줄
-   - 그 이전에 이미 실행된 것 (어제 이전 추천이 어제 실행 등) → *silent drop* (반복 표시 X)
-2. **미체결** 의 경우 *오늘 변화 보고* 분류:
-   - 오늘 catalyst 새로 생김 (가격 추가 하락 + 뉴스 강화 등) → 🆕 **승격** 액션 (US 개장 직전 진입 권고)
-   - 오늘 thesis 무효화 (실적 미스 / 큰 규제 뉴스 등) → ⏰ 만료 (취소)
-   - 변화 없음 → 그대로 유지 (별도 표시 X — morning 와 동일 상태)
+   - morning brief 시각 이후 ~ 지금 사이 실행됨 → ✅ 한 줄
+   - 그 이전 실행 → silent drop (반복 표시 X)
+2. **미체결** 종목 처리:
+   - 오늘 thesis 무효화 (실적 미스 / 큰 규제 뉴스 / 가격 한참 지나감 등) → silent drop (만료)
+   - 그 외 → **carry-over list** 에 추가 (종목·morning 추천 가격·현재가·간단 사유). Step 5 가 이 list 를 fresh 발굴과 합쳐 통합 ranking.
+```
 
-판단 가볍게 — thesis 깊은 재검토 X. 시세 앵커 + 오늘 뉴스 보고 "여전히 진입 적절한가 / 더 시급해졌나" 정도.
+판단 가볍게 — thesis 깊은 재검토 X. 시세 앵커 + 오늘 뉴스 보고 "오늘도 명백히 유효한가?" 정도.
 
-**"신선한 ✅ 만"** — morning brief 직후 사용자가 KR 매수한 것만 표시. 같은 trade 가 여러 brief 에 반복 표시되는 문제 방지.
+**Step 4 의 결과:**
+- ✅ list (실행 확인용, 텔레그램 섹션 3 에 한 줄)
+- 🔄 carry-over list (Step 5 input, *별도 섹션 표시 X* — Step 7 의 🎯 신규 액션 list 에 통합)
 
-### Step 5. 신규 US 액션 도출
+### Step 5. 신규 US 액션 도출 (fresh + Step 4 carry-over 통합)
 
-morning 에 없던 *오늘 뉴스로 새로 surface* 된 종목:
-- 오늘 catalyst (실적 비트·승인·M&A·분석가 큰 폭 상향 등) + 사용자 포트폴리오 컨텍스트
-- *US 시장* 종목 우선 — KR 은 시장 닫혀서 next morning brief 로 미룸
-- 최대 3개 (evening 은 morning 보다 캡 낮음 — 압축 우선)
-- 종목당 narrative *짧게* (한 줄 사유 + hidden risk 한 줄 + 진입가 한 줄 + 사이즈 한 줄)
+**입력 두 가지 통합:**
+1. **Fresh 발굴** — 오늘 뉴스로 새로 surface 된 종목 (실적 비트·승인·M&A·분석가 상향 등). *US 시장* 우선 (KR 은 시장 닫혀서 next morning 으로 미룸).
+2. **Step 4 의 carry-over list** — morning 추천 중 미체결+유효 종목.
 
-매력 약하면 빼라 — filler 금지 (morning 과 동일 원칙).
+→ 두 source 통합 ranking. *오늘 evening 기준 매력도* 로 새 경쟁. 최대 3개 (evening 은 morning 보다 캡 낮음 — 압축 우선). carry-over 라고 자동 boost X — fresh 와 동등하게 ranking.
+
+각 항목에 `(NEW)` 또는 `(morning carry-over, Day [N])` 표기 — 사용자가 신규 vs 계속 추천 구분 가능.
+
+종목당 narrative *짧게* (한 줄 사유 + hidden risk 한 줄 + 진입가 한 줄 + 사이즈 한 줄).
+
+매력 약하면 빼라 — filler 금지 (morning 과 동일 원칙). carry-over 가 3위 밖으로 밀려나면 silent expire.
 
 ### Step 6. evening 모드 결정
 
@@ -126,9 +137,9 @@ Turn 2: draft_telegram_section(part_id=2, text=<오늘 변화 요약>)
 |---|---|---|
 | 1 | 헤더 | 모드별 (위 표) + 발송 시각 |
 | 2 | 🌍 오늘 변화 한 줄 | KR 종가 + US 선물 + 거시 이벤트 압축 |
-| 3 | ✅ morning 추천 추적 | 실행 N건 / 미체결 N건 (변화 있는 것만 한두 줄) |
+| 3 | ✅ morning 실행 확인 | `✅ 실행 N건: [종목명 list]` 한 줄. 0이면 섹션 생략. (carry-over 미체결은 섹션 5 에 통합되므로 별도 ⚠️ 표시 X) |
 | 4 | 🎯 오늘 신규 US 액션 | 모드별 (아래 표) — 종목명·매수·한 줄 사유만 (detail 대시보드) |
-| 5 | 🆕 신규 후보 (있으면) | 최대 3개, 종목 + 한 줄 사유. 0개면 섹션 생략 |
+| 5 | 🎯 추천 매수 list (최대 3) | fresh + morning carry-over **통합**, 추천 강도 순. 종목 + `(NEW)` 또는 `(morning carry-over Day N)` 표기 + 한 줄 사유. 0개면 섹션 생략 |
 | 6 | 💵 현금 한 줄 | 매수가능 현금 (입금 감지 시 강조) |
 | 7 | "👇 [모드별 button]" | Step 9 가 button 변환 (텍스트는 안내만) |
 

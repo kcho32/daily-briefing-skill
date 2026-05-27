@@ -138,17 +138,25 @@ body {
 
 ---
 
-## 신규 후보 카드 패턴 (풀 narrative)
+## 추천 매수 카드 패턴 (풀 narrative, fresh + carry-over 통합)
 
-대시보드의 신규 매수 후보 섹션 (7번) 은 *진짜 풀 디테일* — 텔레그램이 한 줄로 요약한 그 내용. 각 후보 카드:
+대시보드의 추천 매수 섹션 (7번) 은 *진짜 풀 디테일* — 텔레그램이 한 줄로 요약한 그 내용. fresh 발굴과 carry-over (Step 6 미체결+유효) 가 *통합 ranking* 되어 등장.
 
 ```html
 <div class="card candidate-card">
   <div class="card-title">
     [순위]. [종목] ([티커])
+    <span class="badge badge-new">NEW</span>
+    <!-- 또는 carry-over: -->
+    <span class="badge badge-carryover">carry-over · Day [N]</span>
   </div>
   <div class="card-body">
     <div class="narrative"><b>추천 사유:</b> [한 줄 요약]</div>
+
+    <!-- carry-over 인 경우 추가 -->
+    <div class="narrative muted">
+      <b>처음 추천:</b> [YYYY-MM-DD] / 그동안 미체결 / 오늘도 유효한 이유: [한 줄]
+    </div>
 
     <div class="narrative" style="margin-top:8px;">
       <b>강점:</b> [narrative 한두 줄 — 펀더·밸류·모멘텀·catalyst 중 결정적인 것]
@@ -178,9 +186,14 @@ body {
 .candidate-card { border-left: 3px solid var(--accent); }
 .narrative { font-size: 13px; line-height: 1.6; margin: 4px 0; }
 .muted { color: var(--text-muted); font-size: 12px; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; margin-left: 6px; }
+.badge-new        { background: rgba(86, 211, 100, 0.15); color: var(--green); }
+.badge-carryover  { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
 ```
 
 **점수표·매력 N/M 배지 금지** — narrative 로만 매력도 표현. 순위는 추천 강도 순 정렬로 표시 (1위가 가장 강한 추천).
+
+**NEW vs carry-over** 라벨은 *origin 표시일 뿐* ranking 영향 X — 매일 fresh 와 carry-over 가 동등하게 경쟁해서 ranking. carry-over 가 5위권 밖으로 밀려나면 silent expire.
 
 ---
 
