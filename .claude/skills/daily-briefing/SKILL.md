@@ -254,6 +254,13 @@ Step 4 에서 선정된 리스크 점검 대상 종목들에 대해:
 
 > **Carry-over 가 list 밖으로 밀려나면**: silent expire (별도 알림 없이 다음 brief 부턴 안 등장). "어제 추천했던 X 가 오늘 안 보이네?" = "오늘 기준 top 5 매력도 밖" 으로 사용자가 자연스럽게 해석.
 
+> **반복 노출 피로도 관리** (silent expire 의 *2차 방어*): carry-over 가 list 안에 오래 머물러도, *새 근거 없이 같은 narrative 가 반복* 되면 사용자 피로도 ↑. 반복 노출이 길어질수록 노출 강도를 *점진 축소*:
+> - 텔레그램 한 줄 사유 더 압축 (반복 narrative 줄임)
+> - 대시보드 카드 시각 weight 축소 (방식 AI 자율 — border 톤 다운 / muted color / 카드 압축 layout 등)
+> - 단, *오늘 새 근거* (가격 큰 변동 / 새 catalyst / thesis 강화) 가 있으면 다시 풀 강도로 noting `(carry-over Day N — 오늘 강화)` 표기
+>
+> 정해진 N회 임계값 X — AI 가 "이 후보가 며칠째 같은 narrative 인가" 를 매일 직접 판단해서 강도 조절.
+
 **평가 방식:**
 
 각 후보를 narrative 로 평가. 점수표·체크리스트·점수 합산 X.
