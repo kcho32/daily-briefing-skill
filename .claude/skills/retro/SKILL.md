@@ -57,6 +57,7 @@ notifier_mcp.list_recent_dashboards(limit=N)
 - 추천 시 가격 (시세 앵커 기록값)
 - 추천 시 narrative (강점·약점·hidden risk)
 - 추천 시 모드 (위기/액션/안정/리마인드/기회)
+- **판단 메타** (HTML comment regex 추출) — 각 신규 후보 카드 끝의 `<!-- meta: anchor=..., ts=..., src=... -->`, 보류 후보 카드의 `<!-- meta: why_not=..., ts=... -->`. 이 메타가 Step 4 분석 + Step 4b 메타 점검의 핵심 input (어떤 데이터로 판단했는지·왜 보류했는지). 형식: `dashboard-design.md § 판단 메타` 참조.
 
 회고 기간 밖 대시보드는 제외. 추천이 없는 날(안정 모드) 도 카운트 (전체 발송 일수 기준 액션 빈도 산출용).
 
@@ -93,6 +94,7 @@ notifier_mcp.list_recent_dashboards(limit=N)
 - 절대 수익률 + 벤치마크 대비 + 추천 시 의도 + 거시 환경 종합
 - 단일 [-X]% 도 의미 있는 실패일 수 있고 [-Y]% 도 macro 충격으로 양해 가능
 - 추천이 *실행됐는지* (trading_history 와 대조) 도 별도로 추적 — 미실행 추천은 분석 대상이지만 손익은 없음
+- **판단 메타 활용**: Step 1 에서 parse 한 `anchor`·`ts`·`src` 를 narrative 에 활용 — *"어떤 앵커 기반 진입가였는지 + 그 데이터가 fresh 였는지"* 를 적중/실패 narrative 에 포함. 예: "anchor=ma200+52w 저점 기반인데 그 후 ma200 이 깨지면서 thesis 무효화"
 
 #### Step 4b. 추천 빈도 메타 점검 (시스템 튜닝용)
 

@@ -2,13 +2,18 @@
 """Daily briefing 출력 검증 Stop hook.
 
 매일 brief 작성이 끝나면 자동 실행되어 다음을 검증:
-1. 텔레그램 발송 (notifier_mcp.send_briefing) 이 호출됐는지
-2. GitHub 백업 (notifier_mcp.backup_to_github) 이 호출됐는지
-3. 텔레그램 본문에 필수 섹션 키워드가 포함됐는지
-4. 단위 표기 오류 (원/만원 자릿수) 가 없는지
 
-검증 실패 시 stderr 로 사유를 보고하고 exit 1 — Claude Code 가 AI 에게 재작성 유도.
-경고만 줄 사안은 stderr 로 메시지만 출력하고 exit 0.
+ERRORS (exit 1 → AI 재작성 유도):
+1. publish_dashboard + send_drafted_telegram 호출됐는지 (chunked draft flow)
+2. 텔레그램 본문 필수 섹션 키워드 누락 여부
+
+WARNINGS (exit 0 + stderr 메시지):
+- backup_to_github 누락
+- 단위 표기 오류 (원/만원 자릿수)
+- 추천 0개 상황 일치 (텔레그램에 "권장 없음" 인데 대시보드 empty card 누락 의심)
+- send_briefing 단일 호출 (구 flow — 새 chunked flow 권장)
+
+원칙: AI 자율 판단을 약화시키지 않게 *형식 검증만*. narrative 품질 검증은 self-check 에 맡김.
 
 입력: stdin 으로 hook payload (JSON) 를 받음. transcript_path 로 대화 이력 접근.
 출력: stdout 은 사용 안 함. 검증 결과는 exit code + stderr.
@@ -25,18 +30,14 @@ from pathlib import Path
 # Daily-briefing skill 의 트리거 키워드. 이 skill 호출이 아닌 일반 세션에서는 검증 스킵.
 SKILL_NAME = "daily-briefing"
 
-# 텔레그램 본문에 *최소한* 들어가야 할 섹션 키워드.
-REQUIRED_SECTIONS = [
-    "거시",          # 시장·거시 환경
-    "포트폴리오",    # 보유 현황
-    "오늘의 액션",   # 모드별 액션
-    "신규 매수 후보",  # 후보 발굴
-    "매수 전 확인사항",  # 체크리스트
+# 텔레그램 본문에 *최소한* 들어가야 할 섹션 keyword.
+# 모든 모드 (안정/리마인드/액션/기회/위기) 에서 공통으로 포함되는 것만.
+# 모드별로만 등장하는 섹션 (오늘의 액션 emoji 등) 은 강제 X — boilerplate 위험.
+# 각 entry 는 alternatives — list 안 어느 하나라도 본문에 있으면 통과.
+REQUIRED_SECTIONS: list[list[str]] = [
+    ["💼", "포트폴리오"],  # part_id=3 포트폴리오 한 줄 — 모든 모드 필수
+    ["💵", "현금"],         # part_id=8 현금 — 모든 모드 필수
 ]
-
-# 회고 트리거일에 추가로 들어가야 할 키워드.
-# 한국 시간 기준 요일 확인 (날짜 컨텍스트는 transcript 에서 가져옴).
-RETRO_KEYWORD = "회고"
 
 
 def read_payload() -> dict:
@@ -72,23 +73,72 @@ def find_tool_call(transcript: str, tool_name: str) -> bool:
 
 
 def extract_telegram_text(transcript: str) -> str:
-    """가장 최근 send_briefing 호출의 summary_text 인자를 추출.
+    """텔레그램 본문 추출.
 
-    완벽한 파서는 아님 — 단순 substring 추출로 검증용 텍스트 확보.
+    새 chunked flow (draft_telegram_section 누적 → send_drafted_telegram 발사) 우선.
+    구 flow (send_briefing summary_text) 도 fallback 으로 지원.
+
+    완벽한 파서 X — 단순 substring 추출로 검증용 텍스트 확보.
     실패 시 빈 문자열 반환.
     """
-    # send_briefing 호출 근처의 summary_text 인자 추출 시도
+    # 새 flow: draft_telegram_section 의 text 인자 모두 모아서 합침
+    draft_pattern = r'"name"\s*:\s*"draft_telegram_section"[^}]*?"text"\s*:\s*"((?:[^"\\]|\\.)*)"'
+    drafts = re.findall(draft_pattern, transcript)
+    if drafts:
+        combined = "\n".join(d.replace("\\n", "\n").replace('\\"', '"') for d in drafts)
+        return combined
+
+    # 구 flow fallback: send_briefing summary_text
     pattern = r'"summary_text"\s*:\s*"((?:[^"\\]|\\.)*)"'
     matches = re.findall(pattern, transcript)
     if not matches:
         return ""
-    # 가장 마지막 호출 사용 (한 세션에 여러 번 호출됐을 경우 대비)
     return matches[-1].replace("\\n", "\n").replace('\\"', '"')
 
 
+# 추천 0개 상황 텔레그램 패턴 (대시보드에 empty card 가 있어야 함)
+EMPTY_RECOMMEND_PATTERNS = [
+    "권장 없음",
+    "현금 보유가 최선",
+    "신규/추가 매수 권장 없음",
+]
+
+
+def check_empty_card_consistency(telegram_text: str, transcript: str) -> list[str]:
+    """텔레그램에 '추천 0개' 신호가 있으면 대시보드에 empty state 카드도 있어야 함.
+
+    dashboard-design.md § 0개 empty state 카드 - "카드 자체는 생략 X" 룰의 자동 검증.
+    완벽 X — 대시보드 HTML 의 명확한 empty 신호 부재 시 경고.
+    """
+    warnings: list[str] = []
+    has_empty_signal = any(p in telegram_text for p in EMPTY_RECOMMEND_PATTERNS)
+    if not has_empty_signal:
+        return warnings
+
+    # publish_dashboard 호출의 html 인자에 empty 카드 신호 있는지 단순 substring 검색
+    # (html 이 매우 길어서 정밀 parse 는 안 함 — substring 으로 충분)
+    dashboard_html_match = re.search(
+        r'"name"\s*:\s*"publish_dashboard"[^}]*?"html"\s*:\s*"((?:[^"\\]|\\.){0,200000})"',
+        transcript,
+    )
+    if not dashboard_html_match:
+        return warnings  # publish_dashboard 호출 없음 — 다른 check 에서 잡힘
+    dashboard_html = dashboard_html_match.group(1)
+    if not any(p in dashboard_html for p in EMPTY_RECOMMEND_PATTERNS):
+        warnings.append(
+            "텔레그램에 '추천 0개' 신호 있는데 대시보드 HTML 에 empty state 카드 신호 없음 "
+            "— dashboard-design.md § '0개 empty state 카드' 룰 위반 의심 (카드 생략 금지)"
+        )
+    return warnings
+
+
 def check_required_sections(text: str) -> list[str]:
-    """필수 섹션 키워드 누락된 것 반환."""
-    return [section for section in REQUIRED_SECTIONS if section not in text]
+    """필수 섹션 누락된 것 반환.
+
+    각 REQUIRED_SECTIONS entry 는 alternatives — list 안 어느 하나라도 본문에
+    있으면 통과. 모두 없으면 누락으로 보고 (첫 번째 keyword 로 표시).
+    """
+    return [alts[0] for alts in REQUIRED_SECTIONS if not any(a in text for a in alts)]
 
 
 def check_unit_sanity(text: str) -> list[str]:
@@ -119,13 +169,24 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
-    # 1. send_briefing 호출 확인
-    if not find_tool_call(transcript, "send_briefing"):
+    # 1. 발송 flow 확인: 새 chunked flow (publish_dashboard + send_drafted_telegram)
+    #    또는 구 flow (send_briefing) 중 하나는 있어야 함
+    has_new_flow = find_tool_call(transcript, "publish_dashboard") and find_tool_call(
+        transcript, "send_drafted_telegram"
+    )
+    has_old_flow = find_tool_call(transcript, "send_briefing")
+    if not has_new_flow and not has_old_flow:
         errors.append(
-            "notifier_mcp.send_briefing() 호출이 없음 — 텔레그램·대시보드 미발송"
+            "발송 호출 없음 — publish_dashboard + send_drafted_telegram (권장) "
+            "또는 send_briefing (구 flow) 중 하나는 필수"
+        )
+    elif has_old_flow and not has_new_flow:
+        warnings.append(
+            "구 flow (send_briefing) 사용 — 새 chunked flow "
+            "(draft_telegram_section + publish_dashboard + send_drafted_telegram) 권장"
         )
 
-    # 2. backup_to_github 호출 확인 (경고 — reject 까지는 X)
+    # 2. backup_to_github 호출 확인 (경고)
     if not find_tool_call(transcript, "backup_to_github"):
         warnings.append(
             "notifier_mcp.backup_to_github() 호출 누락 — 대시보드 GitHub 백업 안 됨"
@@ -141,10 +202,11 @@ def main() -> int:
             )
 
         # 4. 단위 sanity (경고만)
-        unit_warnings = check_unit_sanity(telegram_text)
-        warnings.extend(unit_warnings)
-    elif find_tool_call(transcript, "send_briefing"):
-        # send_briefing 은 호출됐는데 텍스트 추출 실패 — 파서 한계, 경고만.
+        warnings.extend(check_unit_sanity(telegram_text))
+
+        # 5. 추천 0개 일치 검증 (경고만 — dashboard 0개 카드 생략 위반 의심)
+        warnings.extend(check_empty_card_consistency(telegram_text, transcript))
+    elif has_new_flow or has_old_flow:
         warnings.append("텔레그램 본문 추출 실패 (검증 스킵)")
 
     # 결과 보고

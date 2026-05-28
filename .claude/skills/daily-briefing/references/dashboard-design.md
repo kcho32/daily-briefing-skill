@@ -106,6 +106,21 @@
 **carry-over 인 경우 추가:**
 - 처음 추천일 + 그동안 미체결 + 오늘도 유효한 이유 한 줄
 
+**판단 메타 (retro 분석용, HTML comment — 사용자 UX 영향 X)**:
+
+각 신규 후보 카드 *끝* 에 HTML comment 한 줄로 retro 가 parse 할 메타 박기:
+
+```html
+<!-- meta: anchor=[ma200+52w 저점 등 진입가 산출에 쓴 앵커 조합], ts=[YYYY-MM-DDTHH:MM KST 분석 시점], src=[yfinance|yfinance:stale] -->
+```
+
+3개 필드 필수 (모두 string, AI 가 매번 실데이터로 산출):
+- `anchor` — 진입가 산출에 사용한 시세 앵커 조합 (앵커 활용 narrative 와 일치)
+- `ts` — 분석에 사용된 데이터 시점 (오늘 brief 작성 시각)
+- `src` — 시세 데이터 source (`yfinance` 또는 `yfinance:stale`)
+
+> retro skill 이 이 메타로 *"어떤 데이터로 판단했나 → 왜 틀렸나"* 진단. 사용자에게는 안 보임 (HTML comment).
+
 **carry-over 반복 노출 피로도 — 시각 weight 점진 축소** (SKILL.md § Step 6 "반복 노출 피로도 관리" 와 한 쌍):
 - carry-over 가 같은 narrative 로 오래 반복될수록 카드의 시각 weight 를 *점진 축소* (방식 AI 자율 — border 톤 다운 / muted color / 카드 압축 layout / narrative 압축 등)
 - 단, *오늘 새 근거* (가격 큰 변동·새 catalyst·thesis 강화) 가 있으면 다시 풀 강도로 표시 + 라벨에 `Day N — 오늘 강화` 표기
@@ -189,6 +204,13 @@ AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 
 - 🔍 헤더: "AI 가 보류 권고한 후보"
 - 종목 + 보류 사유 (맥락 요인)
 - 한 줄 평 — 어떤 매력 있는데 왜 미루는지
+
+**판단 메타** — 카드 끝에 HTML comment:
+```html
+<!-- meta: why_not=[보류 사유 핵심 단어, 예: fx_volatility|event_pending|cash_low|concentration], ts=[YYYY-MM-DDTHH:MM KST] -->
+```
+
+> retro 가 *"보류 후보가 결과적으로 옳았나 (놓친 기회)"* 분석 input 으로 사용.
 
 없으면 카드 자체 생략.
 
