@@ -195,6 +195,37 @@ body {
 
 **NEW vs carry-over** 라벨은 *origin 표시일 뿐* ranking 영향 X — 매일 fresh 와 carry-over 가 동등하게 경쟁해서 ranking. carry-over 가 5위권 밖으로 밀려나면 silent expire.
 
+---
+
+## 헤지 제안 카드 패턴 (별도, 위기/이벤트 모드 한정)
+
+**일반 매수 후보 카드와 *완전히 분리*** — 헤지는 *수익 추구 X, 단기 보험*. 평상시 렌더링 X, 위기 모드 또는 강한 이벤트 리스크 시에만.
+
+```html
+<div class="card hedge-card">
+  <div class="card-title">🛡️ 단기 헤지 제안</div>
+  <div class="narrative"><b>목적:</b> [예: FOMC 직전 단기 하방 완충 / AI 섹터 과열 대응 등]</div>
+  <div class="narrative"><b>수단:</b> [카테고리 — 지수 인버스 ETF / 섹터 인버스 / 변동성 상품 / 단기채 등]</div>
+  <div class="narrative"><b>권고 사이즈:</b> [포트폴리오의 일부 — 완전 상쇄 X. 예: 미국 노출의 5~10%]</div>
+  <div class="narrative"><b>예상 보유 기간:</b> [며칠~몇 주. *장기 보유 금지*]</div>
+  <div class="narrative"><b>해제 조건:</b> [예: VIX 안정, 이벤트 통과, 지수 지지 회복]</div>
+  <div class="narrative"><b>손절/무효화:</b> [헤지 자체 손실 한계 — 예: -X% 시 청산]</div>
+  <div class="narrative"><b>왜 매도보다 헤지가 나은가:</b> [세금·재진입·thesis 유지 측면 narrative]</div>
+  <div class="narrative muted">⚠️ 인버스/레버리지 상품은 decay·추적오차 — 장기 보유 대상 X.</div>
+</div>
+```
+
+```css
+.hedge-card { border-left: 3px solid var(--yellow); }
+```
+
+(border 색상이 일반 candidate-card 의 accent 와 달라 사용자가 *다른 카테고리* 임을 즉시 인식)
+
+**렌더링 조건:**
+- 위기 모드 (Step 3 위기 강함 판정) — crisis-playbook.md 의 3가지 옵션 중 헤지 검토
+- 평상 모드 + 강한 이벤트 리스크 (FOMC·CPI·주요 어닝 직전) — 선택적
+- 평상 모드 + 이벤트 없음 → **카드 자체 미렌더링**
+
 ### 추천 0개일 때 카드 (과매매 방지 강조)
 
 오늘 fresh + carry-over 통합 결과 추천할 만한 종목이 *0개* 일 때 — 섹션 자체를 생략하지 말고 *명시적으로 0개임을 표시*. 사용자가 "AI 가 분석 안 했나?" 오해 방지 + 현금 보유가 정당한 선택임을 강조:
