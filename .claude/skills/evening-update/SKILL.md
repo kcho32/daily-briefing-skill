@@ -30,6 +30,8 @@ morning daily-briefing 과 동일 원칙. 핵심:
 
 ## 실행 절차
 
+> **메타 원칙**: `daily-briefing/SKILL.md § 실행 절차` 의 메타 원칙 그대로 따른다 — 모든 규칙·cluster·체크 항목은 *framework*, 자동 실행 조건 X. **evening 은 morning 보다 더 보수적**, 애매하면 *관찰 후보* 또는 *다음 morning 재검토* 우선.
+
 ### Step 1. 데이터 수집 (병렬)
 
 다음 3개를 한 번에 병렬 호출:
@@ -90,6 +92,20 @@ morning daily-briefing 의 Step 6 와 동일 패턴.
 **Step 4 의 결과:**
 - ✅ list (실행 확인용, 텔레그램 섹션 3 에 한 줄)
 - 🔄 carry-over list (Step 5 input, *별도 섹션 표시 X* — Step 7 의 🎯 신규 액션 list 에 통합)
+- 🛡️ **active hedge list** (있는 경우만 — 아래 "active hedge evening 점검" 별도 처리)
+
+### active hedge evening 점검
+
+active hedge 포지션이 있으면 **evening 에서도 해제/축소 여부 점검**. evening 은 *US 장 직전 30분* — futures·VIX·이벤트 결과 보고 *hedge thesis 재평가에 최적 시점*.
+
+**점검 흐름:**
+- US futures + VIX + 오늘 이벤트 결과 (PCE / 어닝 / FOMC 직후 등) 보고 **위기/이벤트 thesis 가 완화** → *장기 보유 방지* 위해 **축소/청산 우선 검토**
+- 이벤트 *전* 리스크가 아직 남아 있음 → *유지 사유 + 해제 조건* 한 줄 명시
+- 헤지 자체 손절 조건 충족 → 청산 (헤지가 무효화됐는데 들고 있을 이유 X)
+
+evening 텔레그램 별도 한 줄: `🛡️ active 헤지: [수단] · [경과 N일] · [evening 판단: 유지/축소/청산 + 사유 한 줄]`
+
+대시보드는 daily 와 동일 헤지 카드 패턴 재활용 (dashboard-design.md "헤지 제안 카드 패턴"), 상태를 "active 추적 중 (evening 점검)" 으로 표기.
 
 ### Step 5. 신규 US 액션 도출 (fresh + Step 4 carry-over 통합)
 
@@ -126,6 +142,18 @@ morning daily-briefing 의 Step 6 와 동일 패턴.
 - 사용자에게 "이런 종목이 surface 됐지만 시간 부족으로 깊은 검토 못함, morning brief 에서 보겠음" 신호
 
 매력 약하면 빼라 — filler 금지 (morning 과 동일 원칙). **추천 0개도 정상** (morning 추천 그대로 진행이 베스트일 수 있음). carry-over 가 3위 밖으로 밀려나면 silent expire.
+
+### 적립식 전략과 evening 기회 대응
+
+사용자의 *기본 전략은 적립식 장기 투자*. evening 에 *강한 기회 신호* 가 발생하고 매수가능 현금이 있어도, **전액 투입이나 충동 매수는 기본값 X**.
+
+**evening 특유의 원칙:**
+- **morning 분석에서 이미 검토된 후보** 가 있고 evening 변화가 *thesis 를 강화* 하면 → **제한적 추가 배치 가능** (carry-over 종목 추가 매수 등)
+- **완전히 새로운 후보** 는 가격·유동성·중복 검증 부족하면 → **관찰 후보로 두고 다음 morning 에서 재검토** (evening 의 시간 압박 + pre-market 단발성 catalyst 만으로 진입 X)
+- 강한 기회여도 *1차 소액/부분 배치 + 잔여 현금 유지* 가 기본 — *예비 현금* 명시적 reserve
+- 좋은 후보 없으면 **현금 보유** (evening 기회 모드 + 추천 0개도 정상)
+
+> daily 의 "적립식 전략과 기회 배치" 와 같은 정신, evening 톤은 *한 단계 더 보수적*. 이유: US 장 직전 시간 압박 → 충동 매수 위험 ↑.
 
 ### Step 6. evening 모드 결정
 
