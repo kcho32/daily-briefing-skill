@@ -96,16 +96,12 @@ morning daily-briefing 의 Step 6 와 동일 패턴.
 
 ### active hedge evening 점검
 
-active hedge 포지션이 있으면 **evening 에서도 해제/축소 여부 점검**. evening 은 *US 장 직전 30분* — futures·VIX·이벤트 결과 보고 *hedge thesis 재평가에 최적 시점*.
+active hedge 포지션이 있으면 evening 에서도 해제/축소 점검. evening 은 *US 장 직전 30분* — futures·VIX·이벤트 결과 (PCE / 어닝 / FOMC 직후 등) 보고 *hedge thesis 재평가 최적 시점*.
 
-**점검 흐름:**
-- US futures + VIX + 오늘 이벤트 결과 (PCE / 어닝 / FOMC 직후 등) 보고 **위기/이벤트 thesis 가 완화** → *장기 보유 방지* 위해 **축소/청산 우선 검토**
-- 이벤트 *전* 리스크가 아직 남아 있음 → *유지 사유 + 해제 조건* 한 줄 명시
-- 헤지 자체 손절 조건 충족 → 청산 (헤지가 무효화됐는데 들고 있을 이유 X)
+룰은 daily-briefing SKILL.md § 헤지 추적·해제 와 동일 (4개 점검 항목 중 하나라도 충족 시 청산·축소 우선 제안). evening 차이는 *데이터 source* 만 — pre-market futures/VIX 가 핵심 input.
 
-evening 텔레그램 별도 한 줄: `🛡️ active 헤지: [수단] · [경과 N일] · [evening 판단: 유지/축소/청산 + 사유 한 줄]`
-
-대시보드는 daily 와 동일 헤지 카드 패턴 재활용 (dashboard-design.md "헤지 제안 카드 패턴"), 상태를 "active 추적 중 (evening 점검)" 으로 표기.
+- 텔레그램 한 줄: `🛡️ active 헤지: [수단] · [경과 N일] · [evening 판단: 유지/축소/청산 + 사유 한 줄]`
+- 대시보드: `references/dashboard-design.md § 헤지 제안 카드 (8c)` 재활용, 상태를 "active 추적 중 (evening 점검)" 으로 표기
 
 ### Step 5. 신규 US 액션 도출 (fresh + Step 4 carry-over 통합)
 
@@ -119,12 +115,9 @@ evening 텔레그램 별도 한 줄: `🛡️ active 헤지: [수단] · [경과
 
 종목당 narrative *짧게* (한 줄 사유 + hidden risk 한 줄 + 진입가 한 줄 + 사이즈 한 줄).
 
-**🔄 자금 출처 디시플린** (daily-briefing 의 "자금 출처별 매수 판단" 섹션과 동일 원칙):
-- 현금 안에서만 추천이 기본. 현금 부족하면 보류
-- 새 후보가 *명확히* 우월 + 보유 종목 *독립적 매도 사유* + 세후 기대값 우월 + 집중도/리스크 개선까지 *모두* 만족할 때만 교체매매 제안
-- 미국 자산 매도는 22% 세금 leak — evening 의 *시간 압박* 으로 충동 교체 위험 ↑, morning 보다 더 보수적
-- 교체매매 제안 시 대시보드에 "매도 대상 / 예상 세금 / 재배치 후보 / 왜 교체가 나은가" 명시
-- **위기/이벤트 모드 시 *단기 헤지* 도 별도 카테고리로 검토** — evening 은 *US 개장 직전* 이라 이벤트 리스크 헤지가 특히 valid 한 시점. 일반 매수 후보와 *완전히 분리* 된 카드로 (daily 의 "단기 헤지 배치 디시플린" + dashboard-design.md "헤지 제안 카드 패턴" 참조)
+**🔄 자금 출처 디시플린**: 룰은 daily-briefing SKILL.md § 자금 출처별 매수 판단 그대로. evening 특유 강조:
+- 시간 압박으로 *충동 교체매매 위험 ↑* → morning 보다 더 보수적, 4개 조건 *모두* 만족할 때만
+- 위기/이벤트 모드 시 단기 헤지가 특히 valid 한 시점 (US 개장 직전 이벤트 리스크 헤지)
 
 **⚠️ Pre-market 엄격성** (evening 의 핵심 디시플린):
 - evening 은 US 개장 30분 전이라 *시간 압박* 으로 충동 추천이 위험. morning 보다 *더 보수적* 으로 판단.
@@ -239,7 +232,7 @@ Turn 2: draft_telegram_section(part_id=2, text=<오늘 변화 요약>)
 5. 신규 후보 (있으면) — 카드
 6. 매수 전 확인사항 — 오늘 변화 기반 narrative
 
-스타일 / CSS 변수는 `references/dashboard-design.md` 의 morning 가이드 재사용. 모드별 배너도 그 표 사용. 다만 *evening 임을 명시*: 제목에 `(evening)` 표기, 헤더 카드에 "morning brief 후 변화" 한 줄.
+표준 섹션 구조·시각 grammar 는 `references/dashboard-design.md` 재사용 (모드 배너 시각 강도 표 그대로). 다만 *evening 임을 명시*: 제목에 `(evening)` 표기, 헤더 카드에 "morning brief 후 변화" 한 줄.
 
 **작성 직후 즉시 발행:**
 ```

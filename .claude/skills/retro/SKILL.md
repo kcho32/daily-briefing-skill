@@ -219,7 +219,7 @@ Turn 2: draft_telegram_section(part_id=2, text=<통계>)
 7. 패턴 분석 (30일 회고만)
 8. 개선 PR 링크 (생성 시) — Step 6 PR URL
 
-스타일은 daily-briefing 대시보드와 동일 CSS 변수·색상 코딩 사용.
+시각 grammar·색상 코딩은 daily-briefing 대시보드와 동일 (`references/dashboard-design.md` 참조, 시각 톤은 AI 자율).
 
 **작성 직후 즉시 발행 + URL 추출:**
 ```
