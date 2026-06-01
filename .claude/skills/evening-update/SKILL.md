@@ -143,6 +143,8 @@ active hedge 포지션이 있으면 evening 에서도 해제/축소 점검. even
 
 매력 약하면 빼라 — filler 금지 (morning 과 동일 원칙). **추천 0개도 정상** (morning 추천 그대로 진행이 베스트일 수 있음). carry-over 가 3위 밖으로 밀려나면 silent expire.
 
+**morning 0 추천 ↔ evening 발굴 강도는 독립 (양방향 anchoring 방지):** morning 추천이 0이었다는 사실은 evening fresh 발굴 강도에 *양쪽 모두* 영향 X. "아침에 없었으니 뭐라도 찾자"(보상 편향)도, "아침에 없었으니 저녁도 볼 것 없다"(과소평가)도 금지. evening 은 *오늘 delta(US pre-market·새 catalyst·KR 종가)가 만든 새 진입 케이스만* 독립적으로 평가 — 없으면 0 이 정답. fresh 발굴 대상은 morning carry-over 뿐 아니라 **morning 에 전혀 없던 신규 종목도 포함** (단, 위 pre-market 엄격성 게이트 — 가격·유동성·중복 미확인 시 🔍 관찰 후보로 미루고 다음 morning 검토 — 그대로 적용).
+
 ### 적립식 전략과 evening 기회 대응
 
 사용자의 *기본 전략은 적립식 장기 투자*. evening 에 *강한 기회 신호* 가 발생하고 매수가능 현금이 있어도, **전액 투입이나 충동 매수는 기본값 X**.
