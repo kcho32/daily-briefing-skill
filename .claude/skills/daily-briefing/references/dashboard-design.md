@@ -259,8 +259,10 @@ AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 
 
 **판단 메타** — 카드 끝에 HTML comment:
 ```html
-<!-- meta: why_not=[보류 사유 핵심 단어, 예: fx_volatility|event_pending|cash_low|concentration], ts=[YYYY-MM-DDTHH:MM KST] -->
+<!-- meta: why_not=[보류 사유 핵심 단어, 예: fx_volatility|event_pending|cash_low|market_extended], ts=[YYYY-MM-DDTHH:MM KST] -->
 ```
+
+> ⚠️ **`concentration`(집중도) 은 평시 보류 사유로 쓰지 않는다** — SKILL.md § 비중 모니터링 "평시 동작" 참조. 집중 테마와 겹치는 후보는 *보류* 가 아니라 그 후보 카드에 "중복 경고" 1줄만 추가하고 정상 ranking 한다. 보류는 `timing·환율·이벤트·현금` 같은 비중 무관 맥락 요인일 때만.
 
 > retro 가 *"보류 후보가 결과적으로 옳았나 (놓친 기회)"* 분석 input 으로 사용.
 
