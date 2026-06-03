@@ -32,6 +32,10 @@ morning daily-briefing 과 동일 원칙. 핵심:
 
 > **메타 원칙**: `daily-briefing/SKILL.md § 실행 절차` 의 메타 원칙 그대로 따른다 — 모든 규칙·cluster·체크 항목은 *framework*, 자동 실행 조건 X. **evening 은 morning 보다 더 보수적**, 애매하면 *관찰 후보* 또는 *다음 morning 재검토* 우선.
 
+### Step 0. US 개장 여부 확인 (가장 먼저)
+
+evening-update 의 존재 이유는 *US 개장 직전*(22:30 KST). **오늘 밤 US 정규장이 안 열리면 → 전체 skip** (텔레그램·대시보드·백업 모두 발송 X). 해당: 토·일 KST 밤(US 토·일 휴장) + US 공휴일. 판정: 요일 + US 시장 캘린더, 의심스러우면 portfolio 시세 변화로 보강. → skip 시 조용히 종료 (알림 없음).
+
 ### Step 1. 데이터 수집 (병렬)
 
 다음 3개를 한 번에 병렬 호출:
