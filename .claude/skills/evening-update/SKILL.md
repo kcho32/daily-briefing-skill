@@ -11,6 +11,8 @@ description: 매일 저녁 22:00 KST 자동 실행되는 *delta update* 워크�
 
 **전제**: morning brief 가 *이미 풀 분석* 을 했음. evening 은 *그 후의 delta 만*. morning narrative 를 재생산 X.
 
+> **⚖️ 판단 헌장**: 모든 판단은 `daily-briefing/SKILL.md § 판단 헌장` 6원칙을 그대로 따른다 — 특히 *액션은 예외(관찰/보유 기본)*, *매도는 ①thesis/②세후 우월 교체만*, *위기 = 영구손실(변동성 아님)*. evening 은 시간 압박으로 한 단계 *더* 보수적.
+
 ## MCP 도구
 - `portfolio_mcp`: 현재 잔고 + 시세 앵커, 오늘 거래 이력
 - `notifier_mcp`: morning 대시보드 조회, 텔레그램·대시보드·백업
