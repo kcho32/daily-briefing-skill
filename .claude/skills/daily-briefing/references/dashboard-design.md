@@ -260,10 +260,10 @@ AI 가 매력적이라 판단했으나 timing·환율·이벤트·현금 같은 
 
 **판단 메타** — 카드 끝에 HTML comment:
 ```html
-<!-- meta: why_not=[보류 사유 핵심 단어, 예: fx_volatility|event_pending|cash_low|market_extended], ts=[YYYY-MM-DDTHH:MM KST] -->
+<!-- meta: why_not=[보류 사유 핵심 단어, 예: fx_volatility|event_pending|cash_low|market_extended], cond=[판단이 바뀌는 조건 한 구절, 예: price<=$X | Q3 마진 가이던스 확인 | FOMC 결과 hawkish면 진입], px=[보류 시점 가격], ts=[YYYY-MM-DDTHH:MM KST] -->
 ```
 
-> ⚠️ **`concentration`(집중도) 은 평시 보류 사유로 쓰지 않는다** — SKILL.md § 비중 모니터링 "평시 동작" 참조. 집중 테마와 겹치는 후보는 *보류* 가 아니라 그 후보 카드에 "중복 경고" 1줄만 추가하고 정상 ranking 한다. 보류는 `timing·환율·이벤트·현금` 같은 비중 무관 맥락 요인일 때만.
+> ⚠️ **`concentration`(집중도)·`tax_leak`·`cash_ratio`·`charter` 는 보류 사유로 쓰지 않는다** — 집중도는 SKILL.md § 포트폴리오 비중 참조 (겹치는 후보엔 "중복 경고" 1줄 후 정상 ranking); 22% 세금은 *현금 매수*에 적용되지 않음; 현금 비율·헌장 인용은 사유가 아니라 결론의 재진술. 보류는 `timing·환율·이벤트(결과별 판단 명시)·현금 부족·펀더·가격` 같은 종목·맥락 요인일 때만. `cond`·`px` 는 retro 가 "조건이 왔는데 안 샀는가 / 샀다면 어땠는가"를 측정하는 데 쓰인다 (retro § Step 4b 5번).
 
 > retro 가 *"보류 후보가 결과적으로 옳았나 (놓친 기회)"* 분석 input 으로 사용.
 
