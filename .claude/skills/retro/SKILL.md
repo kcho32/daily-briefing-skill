@@ -59,6 +59,8 @@ notifier_mcp.list_recent_dashboards(limit=N)
 - 추천 시 모드 (위기/액션/안정/리마인드/기회)
 - **판단 메타** (HTML comment regex 추출) — 각 신규 후보 카드 끝의 `<!-- meta: anchor=..., ts=..., src=... -->`, 보류 후보 카드의 `<!-- meta: why_not=..., ts=... -->`. 이 메타가 Step 4 분석 + Step 4b 메타 점검의 핵심 input (어떤 데이터로 판단했는지·왜 보류했는지). 형식: `dashboard-design.md § 판단 메타` 참조.
 
+- **메타 부재 fallback**: 평가된/보류 후보에 `px` 메타가 없으면 *해당 brief 직전 거래일 종가* 를 진입가 proxy 로 쓰고, Step 4b-5 narrative 에 "메타 부재 N건 (M건 중)" 을 명시한다. 메타 부재가 기간 내 brief 의 과반이면 그 자체를 Step 5 패턴 input 으로 넘긴다 — 측정 불가는 "이상 없음" 이 아니라 *디시플린 점검 불가* 다.
+
 회고 기간 밖 대시보드는 제외. 추천이 없는 날(안정 모드) 도 카운트 (전체 발송 일수 기준 액션 빈도 산출용).
 
 ### Step 2. 현재 상태 + 변동률 수집 (병렬)
@@ -126,6 +128,7 @@ notifier_mcp.list_recent_dashboards(limit=N)
 3. **Carry-over 반복 노출 길이** — 가장 길게 반복된 carry-over 가 Day N 까지 갔는가?
    - 새 근거 없이 같은 narrative 가 N일 반복됐다면 *시각 weight 축소 룰* (daily SKILL.md § Step 6 반복 노출 피로도) 이 제대로 적용됐는지 점검
    - 너무 길게 반복된 carry-over 가 *결국 silent expire* 됐다면 → 더 일찍 expire 하는 게 나았을 가능성
+   - "관찰 N일차"·"무거래 N일째" 같은 **연속 카운터가 brief 제목·배너에 등장한 날수** 를 센다 — daily SKILL.md § Step 3 는 이 카운터를 금지한다. 카운터 등장은 carry-over 가 아니라 *결함* 이며, 회고가 이를 "최장 기록" 식으로 인용하면 그 기록을 정당화하게 된다 (2026-09-20 회고가 그랬다)
 
 4. **Evening 신규 액션의 사후 가치** — evening 에서 *관찰 후보가 아니라 신규 권고로 올라간* 종목들이 morning 권고 대비 *나았는가/나빴는가*?
    - evening 신규 권고 종목들의 사후 성과 vs 같은 기간 morning 신규 권고 평균
