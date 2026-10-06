@@ -35,8 +35,6 @@ morning daily-briefing 과 동일 원칙. 핵심:
 
 > **메타 원칙**: `daily-briefing/SKILL.md § 실행 절차` 의 메타 원칙 그대로 따른다 — 모든 규칙·cluster·체크 항목은 *framework*, 자동 실행 조건 X. **evening 은 morning 보다 더 보수적**, 애매하면 *관찰 후보* 또는 *다음 morning 재검토* 우선.
 
-> **🕘 날짜 기준 = KST.** 루틴 sandbox 시계와 fire 시각 안내는 UTC 다. **오늘 = fire 시각(UTC) + 9h 의 KST 날짜** (`daily-briefing/SKILL.md § 실행 절차` 와 동일). 프롬프트의 `[YYYY-MM-DD]` 는 placeholder.
-
 ### Step 1. 데이터 수집 (병렬)
 
 다음 3개를 한 번에 병렬 호출:

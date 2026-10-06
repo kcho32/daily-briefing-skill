@@ -118,8 +118,6 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 >
 > spec 의 cluster·임계값·카테고리·필드 list 는 *체크리스트가 아니라 framework*. 매 brief 마다 AI 가 그날 컨텍스트로 *재해석* 한다.
 
-> **🕘 날짜 기준 = KST.** 루틴 sandbox 시계와 "This task fired at ... UTC" 안내는 **UTC** 다. 아침 cron(07:00 KST)은 UTC 로 *전날 22:00* 이므로 UTC 날짜를 그대로 쓰면 하루 밀린다. **오늘 = fire 시각(UTC) + 9h 의 KST 날짜** — brief 제목, `publish_dashboard(date=...)`, 어제 추천 추적, 거시 일정 모두 이 날짜로. 루틴 프롬프트의 `[YYYY-MM-DD]` 는 채워지지 않은 placeholder 이므로 근거로 쓰지 말 것.
-
 ### Step 0. 중복 실행 가드
 `notifier_mcp.list_recent_dashboards(limit=3)` 로 morning brief(evening update 제외)의 **`created_at` 이 현재 시각 기준 12시간 이내**인지 확인. 있으면 즉시 종료 (발송·백업 X). 루틴이 같은 아침에 여러 번 fire 되어 서로 다른 모드의 brief 가 겹쳐 나간 사례(2026-06-26 ×4, 2026-09-26 ×2)를 막기 위한 것.
 > 대시보드의 `date` 문자열로 비교하지 말 것 — 2026-10-06 07:02 KST 실행이 UTC 날짜(10-05)를 오늘로 오인해 전날 brief 를 "오늘 것"으로 보고 하루치 brief 를 통째로 건너뛰었다. 종료 메시지에는 찾은 brief 의 `created_at` 과 현재 KST 시각을 함께 적어 오판을 바로 알아볼 수 있게 한다.
