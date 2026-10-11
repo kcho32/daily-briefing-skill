@@ -24,20 +24,16 @@
       "mcp__notifier_mcp__backup_to_github",
       "mcp__notifier_mcp__list_recent_dashboards",
       "mcp__notifier_mcp__record_recommendations",
-      "mcp__notifier_mcp__list_recommendations"
-    ]
-  },
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python .claude/hooks/validate_briefing.py"
-          }
-        ]
-      }
+      "mcp__notifier_mcp__list_recommendations",
+      "mcp__market_public_mcp__get_access_mode",
+      "mcp__market_public_mcp__get_macro_snapshot",
+      "mcp__market_public_mcp__get_investor_sentiment",
+      "mcp__market_public_mcp__screen_stocks",
+      "mcp__market_public_mcp__get_sector_performance",
+      "mcp__market_public_mcp__get_kr_sector_performance",
+      "mcp__market_public_mcp__get_stock_longterm_analysis",
+      "mcp__market_public_mcp__get_kr_stock_analysis",
+      "mcp__market_public_mcp__get_earnings_calendar"
     ]
   }
 }
