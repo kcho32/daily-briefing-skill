@@ -37,7 +37,10 @@
 - **환율**: `portfolio_mcp` 응답의 `currency_breakdown.fx_rate` / `fx_rate_change_pct`
 - **시세 앵커** (가격·ma50·ma200·atr20·52w high/low): `portfolio_mcp` 응답 holdings 각 항목
 - **사용자 적립식 컨텍스트** (입금 시점·비중·매도 신중 사유): SKILL.md 본문 참조
-- **거시 환경 + 종목 뉴스 + 신규 후보**: 웹 검색
+- **거시 환경·투자자 심리**: `portfolio_mcp.get_macro_snapshot` / `get_investor_sentiment` (해석 원칙 `market-analysis.md`)
+- **신규 후보**: `portfolio_mcp.screen_stocks` → 재무·컨센서스는 `get_stock_longterm_analysis`(미국) / `get_kr_stock_analysis`(한국)
+- **실적 일정**: `portfolio_mcp.get_earnings_calendar`
+- **종목 뉴스·catalyst, 거시 일정**: 웹 검색
 
 ---
 

@@ -35,6 +35,12 @@ morning daily-briefing 과 동일 원칙. 핵심:
 
 > **메타 원칙**: `daily-briefing/SKILL.md § 실행 절차` 의 메타 원칙 그대로 따른다 — 모든 규칙·cluster·체크 항목은 *framework*, 자동 실행 조건 X. **evening 은 morning 보다 더 보수적**, 애매하면 *관찰 후보* 또는 *다음 morning 재검토* 우선.
 
+### Step 0.5. 접근 모드 확인
+
+`portfolio_mcp.get_access_mode()` — `account_data_available == true` 일 때만 진행. 그 외에는 evening 을 만들지 않고 (계좌 없이 추정으로 채우지 않음) `notifier_mcp.send_telegram_message` 로 한 줄만 보내고 종료:
+`⚠️ [날짜] 저녁 업데이트 중단 — 계좌 데이터 접근 불가 (auth_mode: [값])`.
+호출 자체가 실패하면 Step 1 의 `get_portfolio_data` 응답으로 판단한다. 계좌 도구 응답에 `account_data_available: false` 가 오면 오류가 아니라 "권한 없음" → 같은 방식으로 중단. (`daily-briefing/SKILL.md § Step 0.5` 와 동일)
+
 ### Step 1. 데이터 수집 (병렬)
 
 다음 3개를 한 번에 병렬 호출:
