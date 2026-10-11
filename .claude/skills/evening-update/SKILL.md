@@ -108,7 +108,7 @@ morning daily-briefing 의 Step 6 와 동일 패턴.
 
 active hedge 포지션이 있으면 evening 에서도 해제/축소 점검. evening 은 *US 장 직전 30분* — futures·VIX·이벤트 결과 (PCE / 어닝 / FOMC 직후 등) 보고 *hedge thesis 재평가 최적 시점*.
 
-룰은 daily-briefing SKILL.md § 헤지 추적·해제 와 동일 (4개 점검 항목 중 하나라도 충족 시 청산·축소 우선 제안). evening 차이는 *데이터 source* 만 — pre-market futures/VIX 가 핵심 input.
+룰은 daily-briefing `references/crisis-playbook.md § 헤지 추적·해제` 와 동일 (4개 점검 항목 중 하나라도 충족 시 청산·축소 우선 제안). evening 차이는 *데이터 source* 만 — pre-market futures/VIX 가 핵심 input.
 
 - 텔레그램 한 줄: `🛡️ active 헤지: [수단] · [경과 N일] · [evening 판단: 유지/축소/청산 + 사유 한 줄]`
 - 대시보드: `references/dashboard-design.md § 헤지 제안 카드 (8c)` 재활용, 상태를 "active 추적 중 (evening 점검)" 으로 표기
