@@ -20,7 +20,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 2. **이 저장소의 개인 브리핑 파일을 읽지 않는다** — `.claude/skills/daily-briefing/SKILL.md`, `references/buying-framework.md`, `crisis-playbook.md`, `dashboard-design.md`, `evening-update/`, `retro/`. 그 안에는 특정인의 현금·세금·보유 사실이 있다. **읽는 파일은 이 파일과 `.claude/skills/daily-briefing/references/market-analysis.md` 뿐이다.**
 3. **개인 기록을 조회하지 않는다** — `list_recommendations`(개인 추천 기록), 개인 대시보드(`list_recent_dashboards` 를 `channel="public"` 없이 호출) 를 보지 않는다.
 4. **"내 포트폴리오", "보유 중", "비중", "평단" 같은 계좌 표현을 쓰지 않는다.** 독자 각자의 상황을 모른다는 전제로 쓴다.
-5. **단톡방 발송은 모두 `channel="public"`** — 텔레그램·대시보드. 추천 기록은 `source="public"`. `chat_id` 는 지정하지 않는다 (서버에 고정돼 있다). **유일한 예외**: Step 0.5·Step 5 의 *중단 경고* 한 줄은 개인 채널(`channel` 미지정)로만 보내고, 그때 단톡방에는 아무것도 보내지 않는다.
+5. **단톡방 발송은 모두 `channel="public"`** — 텔레그램·대시보드. 추천 기록은 `source="public"`. `chat_id` 는 지정하지 않는다 (서버에 고정돼 있다). **유일한 예외**: Step 0.5·Step 5 의 *중단 경고*와 Step 5b 의 *기록 실패* 한 줄은 개인 채널(`channel` 미지정)로만 보내고, 단톡방에는 그 내용을 보내지 않는다.
 
 ---
 
@@ -55,7 +55,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 
 ### Step 0. 중복 실행 가드
 
-`notifier_mcp.list_recent_dashboards(limit=3, channel="public")` — 공개 대시보드의 `created_at` 이 현재 시각 기준 **12시간 이내**면 즉시 종료 (발송 X). 날짜 문자열이 아니라 시각으로 비교한다 (루틴 시계는 UTC).
+`notifier_mcp.list_recent_dashboards(limit=3, channel="public")` — 공개 대시보드의 `created_at`(KST) 이 **오늘(KST = 실행 시각 UTC + 9시간) 날짜**면 즉시 종료 (발송 X). 대시보드의 `date` 문자열이 아니라 `created_at` 으로 비교하고, 롤링 시간 창은 쓰지 않는다 (전날 수동 재실행이 다음 날 정기 실행을 막지 않게).
 
 ### Step 0.5. 접근 모드 확인 (공개 모드여야 진행)
 
@@ -143,7 +143,7 @@ notifier_mcp.record_recommendations(date="YYYY-MM-DD", source="public", mode="<�
     items=[{"symbol", "name", "action": "PASS", "note": "<관찰 이유 한 줄>", "cond": "<확인할 것>"}, ...])
 ```
 
-`action="PASS"` = "평가했지만 매수를 권하지는 않은 후보" — 관찰 후보에 맞는 값이다 (권유 아님). 회고는 이 기록을 "샀다면 어땠나"로, 개인 추천과 *분리해서* 채점한다. 개인 브리핑의 carry-over 에는 들어가지 않는다. 후보가 없으면 `items=[]`.
+`action="PASS"` = "평가했지만 매수를 권하지는 않은 후보" — 관찰 후보에 맞는 값이다 (권유 아님). 회고는 이 기록을 "샀다면 어땠나"로, 개인 추천과 *분리해서* 채점한다. 개인 브리핑의 carry-over 에는 들어가지 않는다. 후보가 없으면 `items=[]`. 응답 `rejected` 가 있으면 형식을 고쳐 한 번 더 — 그래도 실패하면 단톡방 발송은 그대로 하고, 개인 채널(`channel` 미지정)로 `📌 [날짜] 공개 관찰 후보 기록 저장 실패` 한 줄만 보낸다 (회고는 대시보드 JSON 으로 보완).
 
 ### Step 6. 텔레그램 발사
 
