@@ -52,7 +52,9 @@ Attach both connectors to every routine. Authentication is header-only.
 |-----------|-----|---------|---------|
 | `portfolio_mcp` | `https://portfolio-mcp-jdao.onrender.com/mcp` | `Authorization: Bearer <MCP_AUTH_TOKEN>` (server auth) + `X-APP-KEY`, `X-SECRET-KEY`, `X-ACCOUNT-ID` (your KIS key — BYOK) | Account tools (holdings, trades, realized P&L) + public market data (macro, sentiment, sectors, screener, stock analysis, earnings calendar, recommendation scoring) |
 | `notifier_mcp` | `https://notifier-mcp.onrender.com/mcp` | `Authorization: Bearer <MCP_AUTH_TOKEN>` | Telegram send, dashboard publish, recommendation records, GitHub backup |
+| `market_public_mcp` | `https://portfolio-mcp-jdao.onrender.com/mcp?mode=public` | `Authorization: Bearer <MCP_AUTH_TOKEN>` **only — no KIS key headers** | Same server in `public` mode for the group-chat market briefing: account tools and holdings-based lookups are blocked server-side. The `?mode=public` suffix only makes the URL distinct so it can be registered twice |
 
+- KIS key headers: official names `X-KIS-APP-KEY`, `X-KIS-APP-SECRET`, `X-KIS-ACCOUNT-NO`; the server also accepts the aliases `X-APP-KEY`, `X-SECRET-KEY`, `X-ACCOUNT-ID`.
 - The old `?token=...` query URL is **rejected by `portfolio_mcp` since 2026-10-10** (401). Use the header.
 - `portfolio_mcp` keeps no KIS key of its own: without the `X-*` key headers it runs in
   `public` mode and the account tools are disabled. Personal skills check
