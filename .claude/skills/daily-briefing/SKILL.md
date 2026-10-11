@@ -166,7 +166,16 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 
 ### Step 2. 시장 분석 — `references/market-analysis.md` 적용
 
-진입 즉시 `references/market-analysis.md` 를 Read 하고 그대로 적용한다. 입력은 Step 1 의 거시 지표·투자자 심리·섹터 데이터, 그리고 **웹 검색은 오늘·이번 주 거시 일정(FOMC·물가·고용 등)만** 한다.
+**먼저 오늘 공개 브리핑(07:30 `market-radar`)의 시장 판단을 읽는다** — 개인 브리핑 = 공개 시장 분석 + 이 계좌에 맞춘 개인화.
+
+1. `notifier_mcp.list_recent_dashboards(limit=2, channel="public")` → `created_at` 이 **현재 시각 기준 3시간 이내**인 공개 대시보드가 있으면 그 URL 의 HTML 을 원문으로 받는다 (`curl -s <url>` — WebFetch 는 `<script>` 를 버릴 수 있음).
+2. `<script type="application/json" id="market-judgment">` 블록을 파싱한다: `stance`(위기/기회/평상/관찰), `reasons`, `key_indicators`, `sentiment`, `sector_view`, `watch_candidates`, `upcoming`, `data_gaps`.
+3. **있으면 출발점으로 쓴다**: 시장 판단·근거·지표 해석을 처음부터 다시 만들지 않는다. 대신 Step 1 의 이 계좌 데이터(보유 종목 변동·실적 임박·현금)를 더해 *이 계좌에 무엇을 뜻하는지*에 집중한다. Step 1 의 거시 데이터로 공개 판단 이후 바뀐 것이 있는지만 확인한다.
+   - 개인 쪽 결론(모드)이 공개 `stance` 와 **다르면 이유를 한 줄** 적는다 (예: "시장은 평상이지만 보유 종목 실적 리스크로 액션"). 같으면 "공개 판단과 동일" 한 줄.
+   - 대시보드 거시 카드에 공개 대시보드 링크를 단다 (개인 → 공개 방향 링크는 안전. 반대 방향은 없다).
+4. **없거나 읽기 실패**(공개 브리핑 미발행·지연·JSON 오류) → 아래처럼 직접 시장 분석을 한다. 개인 브리핑은 공개 브리핑이 없어도 빠지지 않는다. 텔레그램 `📌` 줄에 "공개 판단 없음 — 자체 분석" 한 줄.
+
+**직접 분석할 때** (위 4번, 또는 공개 판단 이후 큰 변화가 있을 때): `references/market-analysis.md` 를 Read 하고 그대로 적용한다. 입력은 Step 1 의 거시 지표·투자자 심리·섹터 데이터, 그리고 **웹 검색은 오늘·이번 주 거시 일정(FOMC·물가·고용 등)만** 한다. 공개 판단을 쓰는 날에도 `market-analysis.md` 의 원칙(특히 `[Dynamic Rules — 시장 판단]`)은 개인화 판단에 그대로 적용된다.
 
 - 지표 표기(정의·기준일·단위), 데이터 없음 처리(추정 금지), 심리·수급은 보조 재료라는 원칙은 모두 그 파일을 따른다.
 - 그 파일 끝의 `[Dynamic Rules — 시장 판단]` 도 오늘 판단에 적용한다.
@@ -303,6 +312,7 @@ Step 4 에서 선정된 리스크 점검 대상 종목들에 대해:
 
 **가용 도구:**
 - Step 1 의 `screen_stocks` 결과 (미국·한국) — 사용 원칙은 `market-analysis.md § 7` (PER 단독 금지·적자 제외·중복 정리·한국 기준 차이)
+- 오늘 공개 브리핑의 `watch_candidates` (Step 2 에서 읽은 경우) — 공개 쪽은 "들여다볼 만한 종목"까지만 했다. 여기서 **이 계좌의 현금·세금·보유 겹침 기준으로 살 만한지** 다시 판단한다. 공개 후보라고 자동으로 올리거나 빼지 않는다 — fresh 후보와 같은 기준으로 경쟁
 - 후보 검증: 미국 `get_stock_longterm_analysis(symbol)` / 한국 `get_kr_stock_analysis(symbol)` — 재무·밸류에이션·컨센서스 *숫자*만 온다 (서버 판정 없음). 최종 list 에 올릴 후보와 carry-over 재평가 대상에 쓴다. 판단 기준 숫자는 고정하지 않는다
 - 웹 검색 (catalyst·뉴스), AI 자체 지식
 - 예비: `get_stock_candidates` / `get_kr_stock_candidates` (KIS 기준 — 스크리너 실패 시)
