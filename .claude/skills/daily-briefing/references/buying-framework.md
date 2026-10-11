@@ -16,7 +16,7 @@
 
 **사용자 상태:**
 - 올해 양도세 공제 250만원 **이미 소진** → 추가 매도 시 22% 즉시 과세
-- Kiwoom 외부 매매는 `EXTERNAL_REALIZED_PNL_KRW` 환경변수로 자동 합산
+- Kiwoom 외부 매매 손익은 서버가 소유자 키일 때 `EXTERNAL_REALIZED_PNL_KRW` 로 합산한다 — 합산 여부는 응답 `external_realized_pnl_krw.source` 로 확인 (SKILL.md § 외부 양도세 합산)
 - 한국 금융소득 연 2,000만원 초과 시 종합과세 누진
 
 ---
