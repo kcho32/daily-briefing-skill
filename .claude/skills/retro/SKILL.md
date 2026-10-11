@@ -52,7 +52,7 @@ daily-briefing 과 동일 원칙. 일부 도구 실패가 전체 회고 발송�
 
 ### Step 1. 추천 기록 수집 (병렬)
 
-1. `notifier_mcp.list_recommendations(since=<시작일>)` — 추천 기록 (morning·evening 모두)
+1. `notifier_mcp.list_recommendations(since=<시작일>)` — 추천 기록. **`source` 가 `morning`·`evening` 인 것만 채점한다** — `public`(공개 브리핑 관찰 후보)은 이 계좌의 추천이 아니므로 제외 (`test` 등 다른 source 도 제외)
    - 7일 회고: 시작일 = 오늘 − 14일. 추천일이 7일 이상 지난 건은 T+7 *완료*, 최근 7일 건은 *진행 중* (표시만, 판정 X)
    - 30일 회고: 시작일 = 오늘 − 37일
 2. `notifier_mcp.list_recent_dashboards(limit=…)` — 회고 기간 브리프 목록 (모드별 일수·액션 빈도 산출용, 기록 도입 전 기간 보완용)

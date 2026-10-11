@@ -5,7 +5,8 @@ managed cloud).
 
 | Skill | When | Output |
 |-------|------|--------|
-| `daily-briefing` | Daily 07:00 KST (before KRX open) | Compact telegram summary + full HTML dashboard + clickable button |
+| `market-radar` | Daily 07:30 KST | **Public** market briefing for a Telegram group (no account data): macro, sentiment, sectors, screener watch-list, calendar. Leaves a `market-judgment` JSON block on its dashboard |
+| `daily-briefing` | Daily 08:00 KST (before KRX open) | Personal brief = today's public market judgment + this account's holdings, cash, tax, rebalancing. Compact telegram summary + full HTML dashboard |
 | `evening-update` | Daily 22:00 KST (before US open) | Compact (~800 chars) delta telegram + light delta dashboard. Reports only what changed since the morning brief. |
 | `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations (T+N return vs benchmark), picks the worst one, names the missed risk, and opens a one-line `[Dynamic Rules]` PR every run |
 
@@ -33,7 +34,8 @@ so the expressions below are UTC values for the KST times shown.
 
 | Routine | Cron (UTC) | KST |
 |---------|-----------|-----|
-| Daily Portfolio Briefing (`/daily-briefing`) | `0 22 * * *` | daily 07:00 |
+| market-radar (`/market-radar`) — **public connector + notifier only** | `30 22 * * *` | daily 07:30 |
+| Daily Portfolio Briefing (`/daily-briefing`) | `0 23 * * *` | daily 08:00 |
 | EveningPortfolioUpdate (`/evening-update`) | `0 13 * * *` | daily 22:00 |
 | retro-portfolio (`retro`) | `0 21 * * 0` | Monday 06:00 |
 
@@ -59,6 +61,7 @@ Attach both connectors to every routine. Authentication is header-only.
 - `portfolio_mcp` keeps no KIS key of its own: without the `X-*` key headers it runs in
   `public` mode and the account tools are disabled. Personal skills check
   `get_access_mode` first and stop if `account_data_available` is not true.
+- The `market-radar` routine must have **only** `market_public_mcp` + `notifier_mcp` attached. It sends with `channel="public"` (separate bot + group chat fixed on the server via `TELEGRAM_BOT_TOKEN_PUBLIC` / `TELEGRAM_CHAT_ID_PUBLIC`), and its dashboards are isolated from personal ones (prev/next and archive links stay within the public channel).
 - When the server adds new tools, enable them in the claude.ai connector settings —
   tools added after the connector was first connected may stay off.
 
