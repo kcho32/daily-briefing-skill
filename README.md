@@ -5,10 +5,11 @@ managed cloud).
 
 | Skill | When | Output |
 |-------|------|--------|
+| `watchdog` | Daily 08:40 / 22:40 KST | Checks that each briefing was actually published (and not twice) and both servers answer; alerts the personal Telegram only when something is wrong, plus a Monday heartbeat |
 | `market-radar` | Daily 07:30 KST | **Public** market briefing for a Telegram group (no account data): macro, sentiment, sectors, screener watch-list, calendar. Leaves a `market-judgment` JSON block on its dashboard |
 | `daily-briefing` | Daily 08:00 KST (before KRX open) | Personal brief = today's public market judgment + this account's holdings, cash, tax and position decisions. Compact telegram summary + full HTML dashboard |
 | `evening-update` | Daily 22:00 KST (before US open) | Compact (~800 chars) delta telegram + light delta dashboard. Reports only what changed since the morning brief. |
-| `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations (T+N return vs benchmark), picks the worst one, names the missed risk, and opens a one-line `[Dynamic Rules]` PR every run |
+| `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations at T+30 / T+90 (return vs benchmark), picks the worst one, names the missed risk, and opens a one-line `[Dynamic Rules]` PR every run |
 
 All skills pull portfolio data from `portfolio_mcp` and deliver via
 `notifier_mcp`. Telegram messages are summaries / triggers; the linked
@@ -22,6 +23,7 @@ rationale, entry/stop/target, hidden risk).
 .claude/skills/evening-update/SKILL.md
 .claude/skills/retro/SKILL.md
 .claude/skills/market-radar/SKILL.md
+.claude/skills/watchdog/SKILL.md
 ```
 
 Claude Code's routine runner clones this repo and discovers the skills at the
@@ -39,6 +41,7 @@ so the expressions below are UTC values for the KST times shown.
 | Daily Portfolio Briefing (`/daily-briefing`) | `0 23 * * *` | daily 08:00 |
 | EveningPortfolioUpdate (`/evening-update`) | `0 13 * * *` | daily 22:00 |
 | retro-portfolio (`retro`) | `0 21 * * 0` | Monday 06:00 |
+| watchdog (`/watchdog`) — `notifier_mcp` only | `40 13,23 * * *` | daily 08:40 / 22:40 |
 
 Routine prompts state the date rule explicitly — the runner announces the fire
 time in UTC, so "today" must be computed as UTC + 9h:

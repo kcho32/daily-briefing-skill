@@ -108,7 +108,7 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 | `references/crisis-playbook.md` | Step 3 에서 *본질 가치 훼손(영구 손실 위험)* 위기로 판단될 때 (단일 지표 임계값 아님 — VIX·지수 하락만으론 X), 그리고 헤지를 제안하거나 헤지 포지션이 있을 때 (Step 5 · § 자금 출처 4) |
 | `references/dashboard-design.md` | Step 9 (HTML 대시보드 작성) 진입 시 — 매일 발행이므로 사실상 매일 1회 |
 
-> 회고는 **별도 `retro` skill** 로 분리되어 매주 월요일 06:00 KST (첫째 월요일은 30일 회고)에 독립 실행됩니다. daily-briefing 에서는 회고를 작성하지 않음.
+> 회고는 **별도 `retro` skill** 로 분리되어 매주 월요일 06:00 KST (첫째 월요일은 월간 회고)에 독립 실행됩니다. daily-briefing 에서는 회고를 작성하지 않음.
 
 **중요**: references 는 모르고 넘어가지 말 것. 위 트리거 조건이 충족되면 **반드시** 해당 파일을 Read 해서 적용한다.
 
