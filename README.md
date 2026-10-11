@@ -6,7 +6,7 @@ managed cloud).
 | Skill | When | Output |
 |-------|------|--------|
 | `market-radar` | Daily 07:30 KST | **Public** market briefing for a Telegram group (no account data): macro, sentiment, sectors, screener watch-list, calendar. Leaves a `market-judgment` JSON block on its dashboard |
-| `daily-briefing` | Daily 08:00 KST (before KRX open) | Personal brief = today's public market judgment + this account's holdings, cash, tax, rebalancing. Compact telegram summary + full HTML dashboard |
+| `daily-briefing` | Daily 08:00 KST (before KRX open) | Personal brief = today's public market judgment + this account's holdings, cash, tax and position decisions. Compact telegram summary + full HTML dashboard |
 | `evening-update` | Daily 22:00 KST (before US open) | Compact (~800 chars) delta telegram + light delta dashboard. Reports only what changed since the morning brief. |
 | `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations (T+N return vs benchmark), picks the worst one, names the missed risk, and opens a one-line `[Dynamic Rules]` PR every run |
 
@@ -21,6 +21,7 @@ rationale, entry/stop/target, hidden risk).
 .claude/skills/daily-briefing/SKILL.md
 .claude/skills/evening-update/SKILL.md
 .claude/skills/retro/SKILL.md
+.claude/skills/market-radar/SKILL.md
 ```
 
 Claude Code's routine runner clones this repo and discovers the skills at the
@@ -48,7 +49,7 @@ time in UTC, so "today" must be computed as UTC + 9h:
 
 ## Required MCP connectors
 
-Attach both connectors to every routine. Authentication is header-only.
+The three personal routines (daily-briefing, evening-update, retro) get `portfolio_mcp` + `notifier_mcp`. The public `market-radar` routine gets `market_public_mcp` + `notifier_mcp` only. Authentication is header-only.
 
 | Connector | URL | Headers | Purpose |
 |-----------|-----|---------|---------|
@@ -82,7 +83,7 @@ telegram header tone and the dashboard button text.
 ## Market analysis (Step 2)
 
 Macro indicators come from one `get_macro_snapshot` call (volatility & sentiment,
-rates, credit & liquidity, FX, commodities, equity indices, economy) instead of
+rates, credit & liquidity, FX, commodities, equity indices; economy when relevant) instead of
 web searches; only the day's event calendar (FOMC, CPI, NFP …) is searched.
 Investor sentiment/flows come from `get_investor_sentiment`.
 

@@ -20,7 +20,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 2. **이 저장소의 개인 브리핑 파일을 읽지 않는다** — `.claude/skills/daily-briefing/SKILL.md`, `references/buying-framework.md`, `crisis-playbook.md`, `dashboard-design.md`, `evening-update/`, `retro/`. 그 안에는 특정인의 현금·세금·보유 사실이 있다. **읽는 파일은 이 파일과 `.claude/skills/daily-briefing/references/market-analysis.md` 뿐이다.**
 3. **개인 기록을 조회하지 않는다** — `list_recommendations`(개인 추천 기록), 개인 대시보드(`list_recent_dashboards` 를 `channel="public"` 없이 호출) 를 보지 않는다.
 4. **"내 포트폴리오", "보유 중", "비중", "평단" 같은 계좌 표현을 쓰지 않는다.** 독자 각자의 상황을 모른다는 전제로 쓴다.
-5. **모든 발송은 `channel="public"`** — 텔레그램·대시보드·추천 기록 모두. `chat_id` 는 지정하지 않는다 (서버에 고정돼 있다).
+5. **단톡방 발송은 모두 `channel="public"`** — 텔레그램·대시보드. 추천 기록은 `source="public"`. `chat_id` 는 지정하지 않는다 (서버에 고정돼 있다). **유일한 예외**: Step 0.5·Step 5 의 *중단 경고* 한 줄은 개인 채널(`channel` 미지정)로만 보내고, 그때 단톡방에는 아무것도 보내지 않는다.
 
 ---
 
@@ -59,7 +59,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 
 ### Step 0.5. 접근 모드 확인 (공개 모드여야 진행)
 
-`portfolio_mcp.get_access_mode()`:
+이 루틴에 붙은 공개 커넥터(`market_public_mcp`)의 `get_access_mode()`:
 - `auth_mode == "public"` 이고 `account_data_available == false` → 진행.
 - **그 외(계좌 접근이 가능한 상태)면 즉시 중단한다.** 키가 있는 커넥터가 이 루틴에 잘못 붙은 것이다. 단톡방에는 아무것도 보내지 않고, 개인 채널로 경고 한 줄만 보낸다:
   `notifier_mcp.send_telegram_message(text="⚠️ [날짜] 공개 브리핑 중단 — 계좌 접근 가능한 커넥터가 붙어 있음 (auth_mode: [값]). 루틴 커넥터 확인 필요")` (channel 지정 없음 = 개인)
@@ -140,10 +140,10 @@ dashboard_url = result["url"]
 ```
 notifier_mcp.record_recommendations(date="YYYY-MM-DD", source="public", mode="<시장 판단>",
     dashboard_url=dashboard_url,
-    items=[{"symbol", "name", "action": "BUY", "note": "<관찰 이유 한 줄>", "cond": "<확인할 것>"}, ...])
+    items=[{"symbol", "name", "action": "PASS", "note": "<관찰 이유 한 줄>", "cond": "<확인할 것>"}, ...])
 ```
 
-`action="BUY"` 는 "들여다볼 후보"를 채점용으로 표시한 것 (권유 아님). 후보가 없으면 `items=[]`. 개인 회고는 `source="public"` 을 채점하지 않는다.
+`action="PASS"` = "평가했지만 매수를 권하지는 않은 후보" — 관찰 후보에 맞는 값이다 (권유 아님). 회고는 이 기록을 "샀다면 어땠나"로, 개인 추천과 *분리해서* 채점한다. 개인 브리핑의 carry-over 에는 들어가지 않는다. 후보가 없으면 `items=[]`.
 
 ### Step 6. 텔레그램 발사
 
