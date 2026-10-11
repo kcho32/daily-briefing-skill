@@ -7,7 +7,7 @@ managed cloud).
 |-------|------|--------|
 | `daily-briefing` | Daily 07:00 KST (before KRX open) | Compact telegram summary + full HTML dashboard + clickable button |
 | `evening-update` | Daily 22:00 KST (before US open) | Compact (~800 chars) delta telegram + light delta dashboard. Reports only what changed since the morning brief. |
-| `retro` | Every Sunday 21:00 KST (auto-promotes to 30-day on the month's first Sunday) | Telegram retro + HTML retro dashboard, opens auto-PR when failure patterns repeat |
+| `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations (T+N return vs benchmark), picks the worst one, names the missed risk, and opens a one-line `[Dynamic Rules]` PR every run |
 
 All skills pull portfolio data from `portfolio_mcp` and deliver via
 `notifier_mcp`. Telegram messages are summaries / triggers; the linked
@@ -26,34 +26,39 @@ Claude Code's routine runner clones this repo and discovers the skills at the
 above paths. The frontmatter `name:` lets you invoke them as `/daily-briefing`,
 `/evening-update`, or `/retro [weekly|monthly]`.
 
-## Single routine, two fire times (recommended)
+## Routines
 
-Instead of two morning/evening routines, register **one routine** with cron
-`0 7,22 * * *` (KST timezone) and a router prompt that branches by hour:
+Each skill runs as its own Claude Code routine. **Routine cron is evaluated in UTC**,
+so the expressions below are UTC values for the KST times shown.
+
+| Routine | Cron (UTC) | KST |
+|---------|-----------|-----|
+| Daily Portfolio Briefing (`/daily-briefing`) | `0 22 * * *` | daily 07:00 |
+| EveningPortfolioUpdate (`/evening-update`) | `0 13 * * *` | daily 22:00 |
+| retro-portfolio (`retro`) | `0 21 * * 0` | Monday 06:00 |
+
+Routine prompts state the date rule explicitly — the runner announces the fire
+time in UTC, so "today" must be computed as UTC + 9h:
 
 ```
-오늘 [YYYY-MM-DD] routine.
-
-현재 KST 시각 확인 후 분기:
-- 06~09시: /daily-briefing 실행 (morning, 풀 brief)
-- 21~23시: /evening-update 실행 (evening, delta update)
-- 그 외: 비정상 호출 → 즉시 종료
-
-발송·백업은 각 skill 의 Step 흐름 그대로.
-
-도구: portfolio_mcp / notifier_mcp / WebSearch
+날짜·요일은 KST(UTC+9) 기준. 실행 안내의 UTC 시각에 9시간을 더해 오늘 날짜를 정할 것.
 ```
-
-Retro stays on its own weekly routine (different cadence).
 
 ## Required MCP connectors
 
-The remote routine must have these two MCP connectors attached:
+Attach both connectors to every routine. Authentication is header-only.
 
-| Connector | URL | Purpose |
-|-----------|-----|---------|
-| `portfolio_mcp` | `https://stock-portfolio-mcp.onrender.com/mcp?token=...` | KIS account, sectors, realized P&L, tax sim |
-| `notifier_mcp` | `https://notifier-mcp.onrender.com/mcp?token=...` | Telegram send, dashboard publish, GitHub backup |
+| Connector | URL | Headers | Purpose |
+|-----------|-----|---------|---------|
+| `portfolio_mcp` | `https://portfolio-mcp-jdao.onrender.com/mcp` | `Authorization: Bearer <MCP_AUTH_TOKEN>` (server auth) + `X-APP-KEY`, `X-SECRET-KEY`, `X-ACCOUNT-ID` (your KIS key — BYOK) | Account tools (holdings, trades, realized P&L) + public market data (macro, sentiment, sectors, screener, stock analysis, earnings calendar, recommendation scoring) |
+| `notifier_mcp` | `https://notifier-mcp.onrender.com/mcp` | `Authorization: Bearer <MCP_AUTH_TOKEN>` | Telegram send, dashboard publish, recommendation records, GitHub backup |
+
+- The old `?token=...` query URL is **rejected by `portfolio_mcp` since 2026-10-10** (401). Use the header.
+- `portfolio_mcp` keeps no KIS key of its own: without the `X-*` key headers it runs in
+  `public` mode and the account tools are disabled. Personal skills check
+  `get_access_mode` first and stop if `account_data_available` is not true.
+- When the server adds new tools, enable them in the claude.ai connector settings —
+  tools added after the connector was first connected may stay off.
 
 ## Modes (telegram tone scales with importance)
 
@@ -69,16 +74,20 @@ telegram header tone and the dashboard button text.
 | ⚠️ Reminder | Prior rec not yet executed (morning only) | Mild emphasis | 📊 미반영 추천 보기 |
 | ✅ Stable | All quiet | Subtle | 📊 대시보드 |
 
-## Macro indicators (Step 2)
+## Market analysis (Step 2)
 
-Baseline 8 (daily, for consistency + Step 3 input):
-- Core 5: VIX, US 10Y Treasury, DXY, WTI crude, Gold
-- Crisis-leading 3: 10Y-2Y spread, HY credit spread, today/this-week
-  event calendar (FOMC, CPI, NFP, earnings)
+Macro indicators come from one `get_macro_snapshot` call (volatility & sentiment,
+rates, credit & liquidity, FX, commodities, equity indices, economy) instead of
+web searches; only the day's event calendar (FOMC, CPI, NFP …) is searched.
+Investor sentiment/flows come from `get_investor_sentiment`.
 
-AI may add additional context-specific indicators on top of the baseline
-when warranted (e.g., regional FX, sector indices, defense-related
-gauges during geopolitical events). Additions are narrated with reason.
+How to read them — indicator labelling, "no data" handling, the two-sided
+crisis/opportunity lens, sentiment as supporting evidence only, screener rules —
+lives in one shared file so every briefing applies the same principles:
+
+```
+.claude/skills/daily-briefing/references/market-analysis.md
+```
 
 ## Local testing
 

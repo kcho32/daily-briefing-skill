@@ -14,8 +14,8 @@ description: 매일 저녁 22:00 KST 자동 실행되는 *delta update* 워크�
 > **⚖️ 판단 헌장**: 모든 판단은 `daily-briefing/SKILL.md § 판단 헌장` 6원칙을 그대로 따른다 — 특히 *억지 액션도 억지 0건도 편향*, *매도는 ①thesis/②세후 우월 교체만*, *위기 = 영구손실(변동성 아님)*. 사용자의 **현금·입금 정책**(`daily-briefing/SKILL.md § 사용자 투자 컨텍스트`) — 예비 현금 하한 20%·위기/기회 시 0까지·평시 새 자금은 집중 테마 밖으로 — 도 evening 에 그대로 적용. evening 은 시간 압박으로 *신규 종목 진입*에 한 단계 더 보수적일 뿐, 0건을 기본값으로 삼지 않는다.
 
 ## MCP 도구
-- `portfolio_mcp`: 현재 잔고 + 시세 앵커, 오늘 거래 이력
-- `notifier_mcp`: morning 대시보드 조회, 텔레그램·대시보드·백업
+- `portfolio_mcp`: 접근 모드 확인, 현재 잔고 + 시세 앵커, 오늘 거래 이력
+- `notifier_mcp`: morning 대시보드·추천 기록 조회, 추천 기록 저장, 텔레그램·대시보드·백업
 - `WebSearch`: 오늘 뉴스 + US pre-market
 
 ---
@@ -43,14 +43,15 @@ morning daily-briefing 과 동일 원칙. 핵심:
 
 ### Step 1. 데이터 수집 (병렬)
 
-다음 3개를 한 번에 병렬 호출:
+다음 4개를 한 번에 병렬 호출:
 1. `portfolio_mcp.get_portfolio_data()` — 현재 잔고 + 시세 앵커
 2. `notifier_mcp.list_recent_dashboards(limit=3)` — 오늘 morning brief 메타 + 최근 며칠
 3. `portfolio_mcp.get_trading_history(period_days=2)` — 오늘 거래 확인용
+4. `notifier_mcp.list_recommendations(since=<오늘>, source="morning")` — 오늘 morning 이 기록한 추천·보류 목록
 
 ### Step 2. Morning brief 추출 (mechanical)
 
-오늘 morning 대시보드에서 다음을 *목록만* 추출 (narrative 재독 X):
+**1차 출처는 Step 1-4 의 추천 기록** (종목·action·제시가·사유가 이미 기계 판독 형식). 기록이 비어 있으면 (morning 이 기록 전에 실패 등) 오늘 morning 대시보드에서 다음을 *목록만* 추출 (narrative 재독 X):
 - morning 이 추천한 신규 매수 후보 종목 list + 추천 가격
 - morning 의 보유 종목 액션 (있었으면)
 - morning 모드 (안정/액션/기회/위기/리마인드)
@@ -261,6 +262,22 @@ result = notifier_mcp.publish_dashboard(
 dashboard_url = result["url"]
 ```
 
+### Step 8b. 추천 기록 저장 (회고 채점용)
+
+대시보드 발행 직후 evening 의 결과를 기록한다 — 형식·규칙은 `daily-briefing/SKILL.md § Step 9b` 와 같고 `source="evening"`:
+
+```
+notifier_mcp.record_recommendations(
+    date="YYYY-MM-DD", source="evening", mode="<evening 모드>",
+    dashboard_url=dashboard_url,
+    items=[ ...🎯 신규 액션 list (BUY/ADD/SELL/HEDGE)..., ...🔍 관찰 후보 (PASS, cond 에 "다음 morning 재검토 조건")... ],
+)
+```
+
+- 담는 것: evening 의 최종 액션 list 전부 + 관찰 후보 전부. morning 추천을 evening 이 *다시 권고*했으면(carry-over) 그것도 evening 기록에 넣는다 — 회고는 종목별로 처음 추천일 기준으로 채점하므로 중복은 문제없다.
+- 액션·관찰 후보가 하나도 없으면 `items=[]` 로 호출.
+- 저장 실패가 발송을 막지 않는다 — 실패 시 텔레그램 `📌 수집 실패` 줄에 한 줄.
+
 ### Step 9. 텔레그램 발사 (대시보드 URL button 포함)
 
 ```
@@ -281,7 +298,9 @@ notifier_mcp.send_drafted_telegram(
 notifier_mcp.backup_to_github()
 ```
 
-morning 이 이미 오늘 backup 했지만 evening 도 새 대시보드 publish 했으므로 한 번 더 호출 (notifier_mcp 내부에서 *증분* 만 push 하므로 비용 무시 가능).
+morning 이 이미 오늘 backup 했지만 evening 도 새 대시보드 publish 했으므로 한 번 더 호출.
+
+**한 번만 호출하고 재시도하지 않는다** (안정성 규칙의 재시도 정책 예외). 이 도구는 대시보드 수백 개를 올려 60초를 넘기는 게 보통이지만 *서버에서는 끝까지 완료된다* — 시간 초과는 "진행 중"이지 실패가 아니다. 재시도하면 같은 전체 스냅샷이 여러 번 쌓이고 몇 분을 기다리게 된다 (2026-10 실측: 실행마다 3중 스냅샷). 시간 초과를 "백업 실패"로 보고하지 않는다. 시간 초과가 아닌 명시적 오류(`ok: false`)만 실패로 적는다.
 
 ---
 
@@ -292,7 +311,7 @@ morning 이 이미 오늘 backup 했지만 evening 도 새 대시보드 publish 
 | 작업 | morning 의 책임 | evening 의 책임 |
 |---|---|---|
 | 풀 포트폴리오 분석 | ✅ 매일 풀 narrative | ❌ skip (morning 결과 참조) |
-| 거시 8개 baseline | ✅ 매일 검색 | ❌ skip (morning 데이터 + 오늘 변화만) |
+| 거시 지표 (`get_macro_snapshot`) | ✅ 매일 | ❌ skip (morning 데이터 + 오늘 변화만) |
 | 신규 후보 5개 발굴 | ✅ 매일 풀 (US + KR) | 최대 3개, *US 우선*, 짧게 |
 | 보유 종목 분석 | ✅ 매일 | ❌ skip (변화 있는 것만) |
 | 매수 전 확인사항 | ✅ 매일 풀 | 오늘 변화 기반 짧게 |
@@ -318,11 +337,12 @@ evening 은 *시간 절약* 이 핵심 가치. morning 보다 *분석 부담 절
 
 ## 작업 종료 후
 
-발송·백업 도구 호출 순서 (Step 7 → 8 → 9 → 10):
+발송·백업 도구 호출 순서 (Step 7 → 8 → 8b → 9 → 10):
 
 1. `draft_telegram_section` × ~7 (chunked drafts, 병렬 금지)
 2. `publish_dashboard` — delta 대시보드 발행 → `url` 받기
-3. `send_drafted_telegram(buttons=[[{text, url}]])` — 버퍼 합쳐 URL button 과 함께 발사
-4. `backup_to_github` — 증분 백업
+3. `record_recommendations(source="evening")` — 액션 + 관찰 후보 기록
+4. `send_drafted_telegram(buttons=[[{text, url}]])` — 버퍼 합쳐 URL button 과 함께 발사
+5. `backup_to_github` — 한 번만 (재시도 X)
 
 핵심: dashboard publish → telegram send 순서 유지 (URL 을 button 으로 넣기 위함).
