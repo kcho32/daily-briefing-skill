@@ -18,7 +18,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 
 1. **계좌 도구를 호출하지 않는다** — `get_portfolio_data`, `get_trading_history`, `get_realized_pnl`. 인자 없는 `get_earnings_calendar()`(보유 종목 조회)도 호출하지 않는다 — 항상 `symbols` 를 지정한다.
 2. **이 저장소의 개인 브리핑 파일을 읽지 않는다** — `.claude/skills/daily-briefing/SKILL.md`, `references/buying-framework.md`, `crisis-playbook.md`, `dashboard-design.md`, `evening-update/`, `retro/`. 그 안에는 특정인의 현금·세금·보유 사실이 있다. **읽는 파일은 이 파일과 `.claude/skills/daily-briefing/references/market-analysis.md` 뿐이다.**
-3. **개인 기록을 조회하지 않는다** — `list_recommendations`(개인 추천 기록), 개인 대시보드(`list_recent_dashboards` 를 `channel="public"` 없이 호출) 를 보지 않는다.
+3. **개인 기록을 조회하지 않는다** — `list_recommendations` 는 `source="public"` 으로만 호출하고(그 외는 개인 추천 기록), 개인 대시보드(`list_recent_dashboards` 를 `channel="public"` 없이 호출) 를 보지 않는다.
 4. **"내 포트폴리오", "보유 중", "비중", "평단" 같은 계좌 표현을 쓰지 않는다.** 독자 각자의 상황을 모른다는 전제로 쓴다.
 5. **단톡방 발송은 모두 `channel="public"`** — 텔레그램·대시보드. 추천 기록은 `source="public"`. `chat_id` 는 지정하지 않는다 (서버에 고정돼 있다). **유일한 예외**: Step 0.5·Step 5 의 *중단 경고*와 Step 5b 의 *기록 실패* 한 줄은 개인 채널(`channel` 미지정)로만 보내고, 단톡방에는 그 내용을 보내지 않는다.
 
