@@ -8,26 +8,32 @@
       "mcp__portfolio_mcp__get_kr_sector_performance",
       "mcp__portfolio_mcp__get_stock_candidates",
       "mcp__portfolio_mcp__get_kr_stock_candidates",
+      "mcp__portfolio_mcp__get_access_mode",
+      "mcp__portfolio_mcp__get_macro_snapshot",
+      "mcp__portfolio_mcp__get_investor_sentiment",
+      "mcp__portfolio_mcp__screen_stocks",
+      "mcp__portfolio_mcp__get_stock_longterm_analysis",
+      "mcp__portfolio_mcp__get_kr_stock_analysis",
+      "mcp__portfolio_mcp__get_earnings_calendar",
+      "mcp__portfolio_mcp__get_recommendation_performance",
       "mcp__notifier_mcp__send_briefing",
       "mcp__notifier_mcp__send_telegram_message",
       "mcp__notifier_mcp__draft_telegram_section",
       "mcp__notifier_mcp__send_drafted_telegram",
       "mcp__notifier_mcp__publish_dashboard",
       "mcp__notifier_mcp__backup_to_github",
-      "mcp__notifier_mcp__list_recent_dashboards"
-    ]
-  },
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python .claude/hooks/validate_briefing.py"
-          }
-        ]
-      }
+      "mcp__notifier_mcp__list_recent_dashboards",
+      "mcp__notifier_mcp__record_recommendations",
+      "mcp__notifier_mcp__list_recommendations",
+      "mcp__market_public_mcp__get_access_mode",
+      "mcp__market_public_mcp__get_macro_snapshot",
+      "mcp__market_public_mcp__get_investor_sentiment",
+      "mcp__market_public_mcp__screen_stocks",
+      "mcp__market_public_mcp__get_sector_performance",
+      "mcp__market_public_mcp__get_kr_sector_performance",
+      "mcp__market_public_mcp__get_stock_longterm_analysis",
+      "mcp__market_public_mcp__get_kr_stock_analysis",
+      "mcp__market_public_mcp__get_earnings_calendar"
     ]
   }
 }

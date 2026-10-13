@@ -16,7 +16,7 @@
 
 **사용자 상태:**
 - 올해 양도세 공제 250만원 **이미 소진** → 추가 매도 시 22% 즉시 과세
-- Kiwoom 외부 매매는 `EXTERNAL_REALIZED_PNL_KRW` 환경변수로 자동 합산
+- Kiwoom 외부 매매 손익은 서버가 소유자 키일 때 `EXTERNAL_REALIZED_PNL_KRW` 로 합산한다 — 합산 여부는 응답 `external_realized_pnl_krw.source` 로 확인 (SKILL.md § 외부 양도세 합산)
 - 한국 금융소득 연 2,000만원 초과 시 종합과세 누진
 
 ---
@@ -37,7 +37,10 @@
 - **환율**: `portfolio_mcp` 응답의 `currency_breakdown.fx_rate` / `fx_rate_change_pct`
 - **시세 앵커** (가격·ma50·ma200·atr20·52w high/low): `portfolio_mcp` 응답 holdings 각 항목
 - **사용자 적립식 컨텍스트** (입금 시점·비중·매도 신중 사유): SKILL.md 본문 참조
-- **거시 환경 + 종목 뉴스 + 신규 후보**: 웹 검색
+- **거시 환경·투자자 심리**: `portfolio_mcp.get_macro_snapshot` / `get_investor_sentiment` (해석 원칙 `market-analysis.md`)
+- **신규 후보**: `portfolio_mcp.screen_stocks` → 재무·컨센서스는 `get_stock_longterm_analysis`(미국) / `get_kr_stock_analysis`(한국)
+- **실적 일정**: `portfolio_mcp.get_earnings_calendar`
+- **종목 뉴스·catalyst, 거시 일정**: 웹 검색
 
 ---
 
@@ -47,10 +50,9 @@ AI 가 narrative 작성 시 누락하면 사용자 의사결정이 곤란해질 
 형식 강제 아닌 권장 — 빠뜨려도 reject 안 됨, 회고에서 패턴 보이면 사용자가 판단:
 
 - 종목 + 강점·약점 narrative
-- 시세 앵커 기반 진입가·손절·익절 (anchor 값 그대로 인용, 어림셈 X)
+- 시세 앵커 기반 진입가(가격 한도) (anchor 값 그대로 인용, 어림셈 X) — 손절가·익절가 대신 💰 손익 크기(감수 손실·기대 이익 금액, `SKILL.md § 신규 매수 사이징`)
 - Hidden risk 한 줄 (검색으로 현재 상태 확인)
 - 추천 비중 + 분할 일정
 - 미국 자산 추천 시 한국 비과세 대안이 있는지 한 줄 비교
 
 위 항목은 AI 가 종목 특성·시장 상황·사용자 컨텍스트 보고 판단해서 포함 또는 생략. 
-Stop hook 이 일부 검증 (시세 앵커 값 일치 등).
