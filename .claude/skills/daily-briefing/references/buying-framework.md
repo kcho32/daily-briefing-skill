@@ -16,7 +16,10 @@
 
 **사용자 상태:**
 - 올해 양도세 공제 250만원 **이미 소진** → 추가 매도 시 22% 즉시 과세
-- Kiwoom 외부 매매 손익은 서버가 소유자 키일 때 `EXTERNAL_REALIZED_PNL_KRW` 로 합산한다 — 합산 여부는 응답 `external_realized_pnl_krw.source` 로 확인 (SKILL.md § 외부 양도세 합산)
+- Kiwoom 외부 매매 손익은 서버가 소유자 키일 때 `EXTERNAL_REALIZED_PNL_KRW` 로 합산한다 — 합산 여부는 응답 `external_realized_pnl_krw.source` 로 확인 (SKILL.md § 외부 양도세 합산):
+  - `"env:EXTERNAL_REALIZED_PNL_KRW"` → 합산됨 (정상)
+  - `"none"` → 서버의 `tax_simulation_krw` 는 덮어쓰지 않되, SKILL.md § 사용자 투자 컨텍스트의 외부 손익 금액으로 다시 계산한 값을 **"참고 추정 (외부 손익 [금액] 가정)"** 으로 나란히 보여줄 수 있다
+  - 응답 `errors` 에 "env 갱신 필요" 가 오면 (해가 바뀌어 외부 손익 연도가 맞지 않음) 그 문구를 그대로 경고로 표기
 - 한국 금융소득 연 2,000만원 초과 시 종합과세 누진
 
 ---
