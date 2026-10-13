@@ -132,10 +132,14 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 `portfolio_mcp.get_access_mode()` 로 이 실행이 계좌 데이터에 접근할 수 있는지 확인한다.
 
 - `account_data_available == true` → 진행.
-- 그 외(`auth_mode: public` 등) → **개인 브리핑을 만들지 않고 중단한다.** 계좌 없이 포트폴리오 부분을 "추정"으로 채우지 않는다. `notifier_mcp.send_telegram_message` 로 한 줄만 보내고 종료 (대시보드·추천 기록·백업 X):
-  `⚠️ [날짜] 개인 브리핑 중단 — 계좌 데이터 접근 불가 (auth_mode: [값]). 커넥터 키 헤더 확인 필요`
+- 그 외(`auth_mode: public` 등) → **바로 중단하지 않는다.** 커넥터 설정이 그대로여도 서버가 잠깐 public 으로 답할 수 있다 (2026-10-13 08:02 KST: 설정 변경 없이 public → 같은 커넥터가 전날 저녁·당일 오후엔 `byok`. 이 한 번의 응답으로 그날 브리핑이 통째로 빠졌다). 아래 순서로 다시 확인한다:
+  1. 계좌가 필요 없는 수집을 먼저 한다 — Step 1 의 시장·후보 도구(4~9)와 웹 검색. 대기 시간 역할도 한다.
+  2. `get_access_mode()` 다시 확인. `true` 면 계좌 도구(1~3)를 호출하고 그대로 진행.
+  3. 여전히 아니면 첫 확인 후 **2분 이상** 지난 뒤 마지막으로 한 번 더 확인 (`date` 로 시각 확인. 덜 지났으면 Bash `sleep` 으로 기다리고, 막혀 있으면 계좌 없는 수집을 더 하며 시간을 채운다).
+  4. **세 번 모두 아닐 때만** 중단한다. 계좌 없이 포트폴리오 부분을 "추정"으로 채우지 않는다 (먼저 모은 시장 데이터로 개인 브리핑을 만들지 않음). `notifier_mcp.send_telegram_message` 로 한 줄만 보내고 종료 (대시보드·추천 기록·백업 X):
+  `⚠️ [날짜] 개인 브리핑 중단 — 계좌 데이터 접근 불가 (auth_mode: [값], 3회 확인 [첫 시각]~[마지막 시각] KST). 커넥터 설정을 바꾸지 않았다면 portfolio-mcp 서버 일시 문제일 수 있음 — 루틴 수동 재실행`
 - `get_access_mode` 호출 자체가 실패하면(재시도 후에도) Step 1 의 `get_portfolio_data` 응답으로 판단한다 — 계좌 데이터가 정상으로 오면 진행.
-- 이후 어떤 계좌 도구 응답에 `account_data_available: false` 가 오면 **오류가 아니라 "권한 없음"** 이다 → 같은 방식으로 중단.
+- 이후 어떤 계좌 도구 응답에 `account_data_available: false` 가 오면 **오류가 아니라 "권한 없음"** 이다 → 위 2~4 와 같은 방식으로 다시 확인한 뒤 중단.
 
 ### Step 1. 데이터 수집 (병렬 호출)
 
@@ -156,7 +160,7 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 8. `portfolio_mcp.screen_stocks(market="US", ...)` — 미국 후보
 9. `portfolio_mcp.screen_stocks(market="KR", ...)` — 한국 후보 (실패 시 `get_kr_stock_candidates` 로 대체)
 
-**계좌 도구 응답 공통**: 최상위에 `auth_mode` 가 붙는다 (`byok` 정상). `account_data_available: false` 면 Step 0.5 대로 중단.
+**계좌 도구 응답 공통**: 최상위에 `auth_mode` 가 붙는다 (`byok` 정상). `account_data_available: false` 면 Step 0.5 대로 다시 확인한 뒤 중단.
 
 **get_portfolio_data 응답 핵심 필드:**
 - `holdings[i]`: 잔고 기본(symbol/name/quantity/current_price/...) + **시세 앵커**: `prev_close, daily_change_pct, week52_high, week52_low, ma50, ma200, atr20, anchors_source`

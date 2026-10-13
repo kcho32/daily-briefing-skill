@@ -25,7 +25,7 @@ description: 매일 저녁 22:00 KST 자동 실행되는 *delta update*. 아침 
 `notifier_mcp.list_recent_dashboards(limit=5)` 에서 제목이 `포트폴리오 evening update` 로 시작하는 것의 `created_at`(KST) 이 **오늘(KST) 날짜**면 즉시 종료 (발송 X). 롤링 시간 창은 쓰지 않는다 (`daily-briefing § Step 0` 과 같은 이유).
 
 ### Step 0.5. 접근 모드 확인
-`portfolio_mcp.get_access_mode()` — `account_data_available == true` 일 때만 진행. 아니면 `send_telegram_message` 로 `⚠️ [날짜] 저녁 업데이트 중단 — 계좌 데이터 접근 불가 (auth_mode: [값])` 한 줄만 보내고 종료 (계좌 없이 추정으로 채우지 않음). 호출 자체가 실패하면 Step 1 `get_portfolio_data` 로 판단. (`daily-briefing § Step 0.5` 와 동일)
+`portfolio_mcp.get_access_mode()` — `account_data_available == true` 일 때만 진행. 아니면 바로 멈추지 말고 `daily-briefing § Step 0.5` 의 재확인 순서를 따른다 (계좌 없는 수집 먼저 → 재확인 → 첫 확인 2분 이상 뒤 마지막 확인). 세 번 모두 아닐 때만 `send_telegram_message` 로 `⚠️ [날짜] 저녁 업데이트 중단 — 계좌 데이터 접근 불가 (auth_mode: [값], 3회 확인 [첫 시각]~[마지막 시각] KST)` 한 줄만 보내고 종료 (계좌 없이 추정으로 채우지 않음). 호출 자체가 실패하면 Step 1 `get_portfolio_data` 로 판단.
 
 ### Step 1. 데이터 수집 (병렬)
 1. `portfolio_mcp.get_portfolio_data()` — 잔고 + 시세 앵커

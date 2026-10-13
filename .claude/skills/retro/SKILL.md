@@ -56,7 +56,7 @@ daily-briefing 과 동일 원칙. 일부 도구 실패가 전체 회고 발송�
 
 ### Step 0.5. 접근 모드 확인
 
-`portfolio_mcp.get_access_mode()` — `account_data_available == true` 일 때만 진행 (실행 여부 대조에 계좌 데이터가 필요). 그 외에는 회고를 만들지 않고 `notifier_mcp.send_telegram_message` 로 한 줄만 보내고 종료: `⚠️ [날짜] 회고 중단 — 계좌 데이터 접근 불가 (auth_mode: [값])`. (`daily-briefing/SKILL.md § Step 0.5` 와 동일)
+`portfolio_mcp.get_access_mode()` — `account_data_available == true` 일 때만 진행 (실행 여부 대조에 계좌 데이터가 필요). 아니면 바로 멈추지 말고 `daily-briefing/SKILL.md § Step 0.5` 의 재확인 순서를 따른다 (계좌 없는 수집 먼저 → 재확인 → 첫 확인 2분 이상 뒤 마지막 확인). 세 번 모두 아닐 때만 회고를 만들지 않고 `notifier_mcp.send_telegram_message` 로 한 줄만 보내고 종료: `⚠️ [날짜] 회고 중단 — 계좌 데이터 접근 불가 (auth_mode: [값], 3회 확인 [첫 시각]~[마지막 시각] KST)`.
 
 ### Step 1. 추천 기록 수집 (병렬)
 
