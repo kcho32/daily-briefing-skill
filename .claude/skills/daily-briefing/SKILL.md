@@ -136,12 +136,12 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 5. `portfolio_mcp.get_investor_sentiment(...)` — 공개 판단이 있으면 `market="KR"` 만 (한국 수급은 계좌 키가 있을 때만 나와 공개 판단에 없다 — market-analysis § 1, 미국 심리는 공개 `sentiment` 를 쓴다). 없으면 `market="ALL"`
 6. `portfolio_mcp.get_sector_performance()` / `get_kr_sector_performance()` — 공개 판단이 있으면 생략 (공개 `sector_view` 를 쓴다). 없거나, 공개 판단 이후 큰 변화를 직접 분석해야 하면 호출
 7. `portfolio_mcp.get_earnings_calendar()` — 인자 없이 → 보유 종목 실적 일정
-7b. `portfolio_mcp.get_company_catalysts(symbols="<보유 종목>", days=<직전 브리핑 이후 일수, 최소 2>)` — 보유 종목의 공시·뉴스 (Step 4 신호 대조·큰 움직임·4a 의 1차 원천)
+7b. `portfolio_mcp.get_company_catalysts(symbols="<보유 종목 5개 이하>", days=<직전 브리핑 이후 일수, 최소 2>)` — 보유 종목을 **5개씩 나눠 순서대로** (한 번에 다 넣으면 응답이 수만 자라 잘린다 — 2026-10-14 드라이 런 19종목 75k자). 보유 종목의 공시·뉴스 (Step 4 신호 대조·큰 움직임·4a 의 1차 원천)
 
 **후보** (조건값은 그날 AI 가 정한다 — market-analysis § 7)
 8. `portfolio_mcp.screen_stocks(market="US", ...)`
 9. `portfolio_mcp.screen_stocks(market="KR", ...)` (실패 시 `get_kr_stock_candidates`)
-— 공개 판단에 `screened_pool` 이 있으면 8·9 는 부르지 않고 그 풀(07:30 스크리너를 통과하고 데이터가 맞는 종목)에서 고른다. 계좌 사정상 다른 범위가 필요할 때만 부른다 — 예: 풀이 대부분 40% 를 넘은 테마라 새 현금이 갈 다른 테마 후보가 없을 때 (그 이유를 후보 평가표에 한 줄)
+— 공개 판단에 `screened_pool.passed` 가 **비어 있지 않으면** 8·9 는 부르지 않고 그 풀(07:30 스크리너를 통과하고 데이터가 맞는 종목)에서 고른다. 계좌 사정상 다른 범위가 필요할 때만 부른다 — 예: 풀이 대부분 40% 를 넘은 테마라 새 현금이 갈 다른 테마 후보가 없을 때 (그 이유를 후보 평가표에 한 줄). `screened_pool` 이 없거나 `passed` 가 비었으면(스크리너 실패·0건) 공개 판단이 있어도 8·9 를 직접 부른다
 
 계좌 도구 응답 최상위에 `auth_mode` 가 붙는다 (`byok` 정상). `get_portfolio_data` 핵심 필드: `holdings[i]` (잔고 + 시세 앵커 `prev_close, daily_change_pct, week52_high, week52_low, ma50, ma200, atr20, anchors_source`), `currency_breakdown[i]` (`fx_rate, fx_rate_prev, fx_rate_change_pct`), `by_market.{domestic,overseas}`.
 
@@ -300,7 +300,7 @@ notifier_mcp.upsert_trim_plan(symbol, name, qty_total, tranches_total, source="m
 notifier_mcp.log_trim(symbol, action="executed", qty=<체결 수량>, price=<체결가>, date="<체결일>", source="morning")  # Step 5 가 찾은 체결만
 notifier_mcp.log_trim(symbol, action="postponed", source="morning", reason="<이유>")      # 활성 계획 종목을 미루는 날은 반드시
 ```
-- 회차를 *권한* 것은 추천 기록 `SELL` 이다 — 체결 전엔 `executed` 로 남기지 않는다. 목표 수량을 채우고 25% 이하면 `action="completed"` (채웠는데 아직 25% 초과·목표 전에 하회한 경우는 § 리스크 상한 헌장 1).
+- 회차를 *권한* 것은 추천 기록 `SELL` 이다 — 체결 전엔 `executed` 로 남기지 않는다. 지정가를 현재가보다 높게 걸어 둔 회차도 *권한* 것이다 (`SELL` 만, `postponed` 아님 — 미체결이면 다음 브리핑이 다시 판단). `postponed` 는 그날 약세라 회차를 아예 내지 않을 때만. 목표 수량을 채우고 25% 이하면 `action="completed"` (채웠는데 아직 25% 초과·목표 전에 하회한 경우는 § 리스크 상한 헌장 1).
 - `rejected: true` 는 형식 문제만 고쳐 한 번 더 (같은 날짜 `executed` 중복 거부는 정상 — 재시도 X). 규칙 거부는 대시보드 현금 섹션에 한 줄. 호출 실패면 발송은 계속하고 현금 줄에 `📌 리스크 상태 저장 실패`.
 
 ### Step 10. 텔레그램 발사
