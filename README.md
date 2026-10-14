@@ -9,7 +9,7 @@ managed cloud).
 | `market-radar` | Daily 07:30 KST | **Public** market briefing for a Telegram group (no account data): macro, sentiment, sectors, screener watch-list, calendar. Leaves a `market-judgment` JSON block on its dashboard |
 | `daily-briefing` | Daily 08:00 KST (before KRX open) | Personal brief = today's public market judgment + this account's holdings, cash, tax and position decisions. Compact telegram summary + full HTML dashboard |
 | `evening-update` | Daily 22:00 KST (before US open) | Compact (~800 chars) delta telegram + light delta dashboard. Reports only what changed since the morning brief. |
-| `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations at T+30 / T+90 (return vs benchmark), picks the worst one, names the missed risk, and opens a one-line `[Dynamic Rules]` PR every run |
+| `retro` | Every Monday 06:00 KST (auto-promotes to 30-day on the month's first Monday) | Scores recorded recommendations at T+30 / T+90 (return vs benchmark), always picks the worst one and names the missed risk; opens a one-line `[Dynamic Rules]` PR only when that miss was a judgment or process flaw (otherwise records "no rule" with numeric reasons; 3 such retros in a row with negative excess return force a rule candidate for human review) |
 
 All skills pull portfolio data from `portfolio_mcp` and deliver via
 `notifier_mcp`. Telegram messages are summaries / triggers; the linked
