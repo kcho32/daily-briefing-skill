@@ -140,6 +140,7 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 **후보** (조건값은 그날 AI 가 정한다 — market-analysis § 7)
 8. `portfolio_mcp.screen_stocks(market="US", ...)`
 9. `portfolio_mcp.screen_stocks(market="KR", ...)` (실패 시 `get_kr_stock_candidates`)
+— 공개 판단에 `screened_pool` 이 있으면 8·9 는 부르지 않고 그 풀(07:30 스크리너를 통과하고 데이터가 맞는 종목)에서 고른다. 계좌 사정상 다른 범위가 필요할 때만 부른다 — 예: 풀이 대부분 40% 를 넘은 테마라 새 현금이 갈 다른 테마 후보가 없을 때 (그 이유를 후보 평가표에 한 줄)
 
 계좌 도구 응답 최상위에 `auth_mode` 가 붙는다 (`byok` 정상). `get_portfolio_data` 핵심 필드: `holdings[i]` (잔고 + 시세 앵커 `prev_close, daily_change_pct, week52_high, week52_low, ma50, ma200, atr20, anchors_source`), `currency_breakdown[i]` (`fx_rate, fx_rate_prev, fx_rate_change_pct`), `by_market.{domestic,overseas}`.
 
@@ -147,7 +148,7 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 **먼저 오늘 공개 브리핑(07:30 `market-radar`)의 시장 판단을 읽는다** — 개인 브리핑 = 공개 시장 분석 + 이 계좌에 맞춘 개인화.
 
 1. (Step 1 맨 앞에서 한다) `notifier_mcp.list_recent_dashboards(limit=2, channel="public")` → `created_at` 이 **현재 기준 3시간 이내**인 공개 대시보드가 있으면 원문으로 받는다 (`curl -s <url>` — WebFetch 는 `<script>` 를 버릴 수 있음).
-2. `<script type="application/json" id="market-judgment">` 블록을 파싱: `stance`(위기/기회/평상/관찰), `reasons`, `key_indicators`, `sentiment`, `sector_view`, `watch_candidates`, `upcoming`, `data_gaps`.
+2. `<script type="application/json" id="market-judgment">` 블록을 파싱: `stance`(위기/기회/평상/관찰), `reasons`, `key_indicators`, `sentiment`, `sector_view`, `watch_candidates`, `screened_pool`(있으면), `upcoming`, `data_gaps`.
 3. **있으면 출발점으로 쓴다** (공개 판단도 *데이터*다): 시장 판단을 처음부터 다시 만들지 않고, Step 1 의 계좌 데이터를 더해 *이 계좌에 무엇을 뜻하는지*에 집중한다. Step 1 거시 데이터로는 공개 판단 이후 바뀐 것만 확인한다.
    - Step 3 의 시장 판단이 공개 `stance` 와 **다르면 이유를 한 줄** (같으면 "공개 판단과 동일") — 텔레그램 헤더·대시보드 헤더에 쓰고 `<!-- public_stance=[값], my_stance=[값] -->` 주석 (회고가 채점). 브리핑 모드(액션·리마인드 등)는 비교 대상이 아니다.
    - 대시보드 헤더에 공개 대시보드 링크 (개인 → 공개 방향만).
@@ -175,7 +176,7 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 보유 종목 전체를 매일 상세 분석하지 않는다 — **"오늘 판단 변화가 필요한 종목"** 만 상세히, 나머지는 압축 한 줄. 선정 (정해진 임계값 X, 두 list 가 겹치거나 0개여도 OK):
 - **상한(25%) 초과 또는 축소 계획 진행 중 (필수, 매일)** — 오늘 회차 실행·연기와 이유 (§ 리스크 상한 헌장 1)
 - 비중이 큰 종목, 오늘 `daily_change_pct` 가 의미 있게 큰 종목, 최근 점검 안 한 핵심 보유 종목 (정기 rotation), 시장 모드와 관련된 섹터 종목
-- **🚫 틀렸다는 신호 대조 (필수, 매일)**: `notifier_mcp.list_recommendations(since="2026-10-12", actions="BUY,ADD", limit=500)` (기록 시작일부터 — 그 전 매수는 `cond` 가 없다) 에서 `source` 가 `morning`·`evening` 이고 **지금 보유 중인** 종목마다 가장 최근 기록의 `cond` 를 가져와, 그와 관련된 사건(실적·공시·주요 뉴스)이 직전 브리핑 이후 있었던 종목만 확인한다 (매일 전부 검색 X). **확인됐으면** 4b 필수 + 매도 사유 ① 로 판단, 텔레그램 ⚠️ 변한 것과 대시보드 § 3 에 결론 한 줄 (매도면 오늘 결정). `cond` 없는 기록 도입 전 종목은 평소 기준으로만.
+- **🚫 틀렸다는 신호 대조 (필수, 매일)**: `notifier_mcp.list_recommendations(actions="BUY,ADD", symbols="<지금 보유 중인 종목 코드, 쉼표 구분>", latest_per_symbol=true)` 로 **보유 종목마다 가장 최근 매수 기록 1건**의 `cond` 를 가져와 (BUY·ADD 는 개인 브리핑만 남긴다 — 기록 도입 2026-10-12 전에 산 종목은 결과에 없다), 그와 관련된 사건(실적·공시·주요 뉴스)이 직전 브리핑 이후 있었던 종목만 확인한다 (매일 전부 검색 X). **확인됐으면** 4b 필수 + 매도 사유 ① 로 판단, 텔레그램 ⚠️ 변한 것과 대시보드 § 3 에 결론 한 줄 (매도면 오늘 결정). `cond` 없는 기록 도입 전 종목은 평소 기준으로만.
 - **이유 모를 큰 움직임 (필수, 양방향)**: 직전 브리핑 이후 움직임(`current_price` 와 직전 브리핑 시점 가격 — `daily_change_pct` 는 휴장 뒤엔 하루 전 값일 수 있다)에서 같은 시장 지수 움직임을 뺀 **초과 움직임**이 평소 변동폭(`atr20`, 가격 대비 %)의 2배를 넘었는데 원인 사건을 모르면 4a 로 "왜 움직였나"를 검색한다 (thesis 가 깨지는 날은 보통 가격이 먼저 빠진다). 판단하는 것은 가격이 아니라 **찾은 원인**: `cond`·산 이유와 닿으면 4b 필수 + ① 판단 / 원인 없음·시장 요인이면 "이유 없는 하락 — 보유" (추가 매수는 Step 6 에서 동등 경쟁) / 급등은 thesis 강화인지 하이프인지 한 줄 (급등은 매도 사유 아님) / 못 찾으면 "원인 미확인 — 보유, 다음 브리핑 재확인". 움직임의 크기 자체는 매도·매수 사유가 아니다.
 - **회고가 넘긴 종목 (필수)**: Step 0 목록에서 제목에 `회고` 가 든 가장 최근 대시보드를 원문으로 받아 `<!-- thesis_broken=[종목,...] -->` 주석의 종목. 그 회고 이후 아침 브리핑이 아직 없었으면 4b 필수 + ① 판단, 대시보드 § 3 에 결론 한 줄.
 
@@ -216,7 +217,7 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 **매일 후보를 발굴·평가한다** (평가 ≠ 추천). 보류한 후보마다 **판단이 바뀌는 조건**(가격대·확인할 지표·이벤트 결과)을 한 줄 — 회고가 그 조건이 왔는지 잰다. 매력이 약한 날은 "오늘은 신규/추가 매수 권장 없음" + 평가한 후보와 종목 단위 사유·조건.
 
 **후보 출처** (발굴 전략은 AI 자율):
-- Step 1 `screen_stocks` (원칙은 `market-analysis.md § 7`) / 예비 `get_stock_candidates`·`get_kr_stock_candidates`
+- 오늘 공개 `screened_pool` (있으면 먼저) 또는 Step 1 `screen_stocks` (원칙은 `market-analysis.md § 7`) / 예비 `get_stock_candidates`·`get_kr_stock_candidates`
 - 오늘 공개 `watch_candidates`, 전날 evening 🔍 관찰 후보 (⏰ 만료 아닌 것 — 오늘 반드시 다시 평가하고 기록) — 이 계좌의 현금·세금·보유 겹침으로 다시 판단, 자동으로 올리거나 빼지 않는다
 - Step 5 carry-over
 - 검증: 미국 `get_stock_longterm_analysis` / 한국 `get_kr_stock_analysis` (숫자만 — 판단 기준 숫자는 고정하지 않음), 웹 검색 (catalyst·뉴스)
