@@ -66,7 +66,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 
 ### Step 1. 데이터 수집
 
-병렬로 (스크리너는 하나씩):
+portfolio 도구(`market_public_mcp` — 개인 브리핑과 같은 512MB 서버)는 **하나씩 순서대로** 부른다. 웹 검색은 함께 돌려도 된다:
 1. `get_macro_snapshot(groups=...)` — 그룹 선택은 market-analysis § 1
 2. `get_investor_sentiment(market="US")` — 한국 수급은 공개 모드에서 제공되지 않는다 → "데이터 없음"
 3. `get_sector_performance()` / `get_kr_sector_performance()`
@@ -104,7 +104,7 @@ Step 1 스크리너 결과에서 **3~5개**를 고른다 (없으면 0개도 정�
 1. `notifier_mcp.list_recommendations(since=<오늘 − 30일>, source="public", actions="PASS")` — 종목마다 가장 최근 기록만 본다. 가장 최근 기록이 `🔁 관찰 종료` 면 이미 알린 종목이라 건너뛴다. 오늘 Step 3 에서 다시 고른 종목도 건너뛴다 (오늘 새로 평가했으니).
 2. 각 종목의 `cond`(🚫 깨지는 신호)가 기록일 이후 실제로 확인됐는지 본다 — **매일 전부 검색하지 않는다.** 출처를 확인한다.
    - **매일**: 기록일 이후 *실적 발표가 지나간* 후보만 — `get_earnings_calendar(symbols="<후보들>")` 한 번으로 고른다. 그리고 오늘 Step 1 웹 검색(시장 뉴스)에서 이름이 걸린 후보.
-   - **월요일**: 위에 더해 지난 30일 후보 전체를 한 번 훑는다 (주말 사이 공시·뉴스 포함).
+   - **월요일**: 위에 더해, 지난 30일 후보를 `get_recommendation_performance(recommendations=[{symbol, date, action:"PASS"}, ...])` **한 번**으로 소개일 이후 움직임을 받는다. 같은 시장 지수보다 크게 움직인 후보(초과 움직임 절댓값이 큰 순, 최대 5개 — 가격이 크게 움직였다는 건 사건이 있었을 가능성이 높다)만 주말 사이 공시·뉴스를 검색한다. 나머지는 검색하지 않는다 — 전부 검색하면 월요일 실행이 늦어진다. 검색한 종목과 고른 이유(초과 움직임 숫자)를 대시보드 지난 후보 점검에 한 줄.
 3. 확인된 종목만 텔레그램 part 7 에 한 줄씩: `🔁 [종목] ([처음 소개일]) — 관찰 이유였던 [X]가 깨짐: [근거·출처]`. **"팔아라"가 아니라 "들여다볼 이유가 사라졌다"** 로만 쓴다 (투자 권유 아님). 반대로 이유가 *강해진* 경우는 쓰지 않는다 — 다시 보려면 Step 3 에서 새로 고른다.
 4. 알린 종목은 Step 5b 기록에 `action="PASS"`, `note="🔁 관찰 종료: [깨진 이유]"`, `cond=""` 로 남긴다 — 다음 날 같은 알림이 반복되지 않게.
 - `cond` 가 비어 있거나 확인할 수 없는 문장인 옛 기록은 점검하지 않는다 (기록 도입 초기·형식 변경 전).
@@ -133,10 +133,9 @@ Step 1 스크리너 결과에서 **3~5개**를 고른다 (없으면 0개도 정�
 
 텔레그램보다 자세한 본문: 시장 판단과 근거, 지표 표(정의·값·변화·기준일, 빠진 지표는 "데이터 없음"), 심리, 섹터 표, 관찰 후보 카드(재무·밸류에이션·이익 방향·시장 판단과의 연결·리스크·확인할 것 — 유리·불리를 배지·헤드라인으로 올리지 않는다)·후보끼리 이익 원천 겹침(있을 때)·지난 후보 점검(🔁 관찰 종료·오늘 다시 고르지 않음), 일정, 안내 문구.
 
-**대시보드 HTML 안에 시장 판단 JSON 블록을 반드시 넣는다** — 08:00 개인 브리핑이 이것을 읽어 출발점으로 쓴다:
+**시장 판단 객체를 반드시 함께 발행한다** — 08:00 개인 브리핑이 이것을 읽어 출발점으로 쓴다. HTML 안에 JSON 을 직접 쓰지 않는다 (따옴표 하나로 깨지면 개인 브리핑이 읽지 못한다). 객체를 `publish_dashboard(market_judgment=...)` 로 넘기면 서버가 `<script type="application/json" id="market-judgment">` 블록으로 넣는다. 객체 형태:
 
-```html
-<script type="application/json" id="market-judgment">
+```
 {"date": "YYYY-MM-DD",
  "generated_at": "YYYY-MM-DDTHH:MM+09:00",
  "stance": "위기 | 기회 | 평상 | 관찰",
@@ -147,16 +146,19 @@ Step 1 스크리너 결과에서 **3~5개**를 고른다 (없으면 0개도 정�
  "watch_candidates": [{"symbol": "<티커/코드>", "name": "<이름>", "why": "<한 줄>", "macro_fit": "<압력별 이 회사 이익에 닿는 경로 — 유리·불리·엇갈림·경로 작음·확인 못 함 + 회사 쪽 근거>", "risk": "<한 줄>", "break_signal": "<🚫 깨지는 신호>"}],
  "closed_candidates": [{"symbol": "<티커/코드>", "first_date": "YYYY-MM-DD", "broken": "<깨진 이유·출처>"}],
  "not_repicked": [{"symbol": "<티커/코드>", "first_date": "YYYY-MM-DD", "reason": "<한 줄>"}],
+ "screened_pool": {"criteria": {"US": "<오늘 쓴 조건>", "KR": "<오늘 쓴 조건>"},
+                   "passed": [{"symbol": "<티커/코드>", "name": "<이름>", "market": "US | KR"}]},
  "upcoming": ["<일정 한 줄>"],
  "data_gaps": ["<빠진 데이터>"]}
-</script>
 ```
 
-JSON 은 유효해야 한다 (따옴표·쉼표). 계좌 정보는 이 블록에도 넣지 않는다.
+- `screened_pool.passed` — Step 1 스크리너를 통과한 종목 중 Step 3 판단 순서 1(데이터가 서로 맞는가)을 통과한 것, 시장별 최대 15개 (관찰 후보로 고른 것 포함). 개인 브리핑이 스크리너를 다시 부르지 않고 이 풀에서 계좌 사정에 맞는 후보를 고른다. 종목 코드·이름·시장만 — 판단 문장은 넣지 않는다.
+- 계좌 정보는 이 객체에도 넣지 않는다.
 
 ```
-result = notifier_mcp.publish_dashboard(html=<HTML>, title="마켓 레이더 YYYY-MM-DD", date="YYYY-MM-DD", channel="public")
-dashboard_url = result["url"]
+result = notifier_mcp.publish_dashboard(html=<HTML — market-judgment 블록 없이>, title="마켓 레이더 YYYY-MM-DD",
+                                        date="YYYY-MM-DD", channel="public", market_judgment=<위 객체>)
+dashboard_url = result["url"]   # 응답 market_judgment_injected 가 true 인지 확인
 ```
 
 `channel="public"` 이면 대시보드의 이전/다음·아카이브 링크가 공개 대시보드끼리만 이어진다. **`channel` 을 빼먹으면 개인 아카이브로 이어지는 링크가 생긴다** — 응답의 `channel` 이 `"public"` 인지 확인하고, 아니면 발송하지 말고 중단 + 개인 채널 경고.
@@ -194,4 +196,4 @@ notifier_mcp.send_drafted_telegram(channel="public",
 - [ ] 관찰 후보마다 🚫 깨지는 신호(확인 가능한 사건)를 적었는가 · 지난 후보 중 깨진 것만 🔁 로 알렸고 "팔아라"로 쓰지 않았는가
 - [ ] 숫자에 출처·기준일이 있는가, 빠진 지표를 추정하지 않고 "데이터 없음"으로 썼는가
 - [ ] 안내 문구(투자 권유 아님)가 있는가
-- [ ] 대시보드에 `market-judgment` JSON 블록이 있고 유효한가
+- [ ] `publish_dashboard` 에 `market_judgment` 객체를 넘겼고 응답 `market_judgment_injected` 가 true 인가 (HTML 에 JSON 을 직접 쓰지 않았는가)
