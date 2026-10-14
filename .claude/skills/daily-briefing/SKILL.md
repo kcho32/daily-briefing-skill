@@ -189,7 +189,7 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 ### Step 4b. 보유 종목 리스크 점검
 가격 변동이 없어도 조용한 악재(소송·고객 의존도·수출 규제 등)를 놓치지 않게. 종목 사업 모델·섹터로 살펴볼 리스크와 검색 키워드를 종목별로 직접 정한다. 출력: `⚠️ [종목] 점검: [카테고리] — [내용·후속 영향]` / `🔍 [종목] 점검: 특이사항 없음`.
 
-**실적 발표 임박** (`get_earnings_calendar`): 그 주 안에 결과가 판단에 영향을 줄 수 있는 보유 종목을 `📅 [종목] 실적 [날짜] (D-[N][, 추정 일정]) · EPS 컨센서스 [값]` 로 표시 (`date_is_estimate: true` → "(추정)"). **표시만 한다** — 실적 임박은 매도·축소·헤지 사유가 아니다. 비중이 크면 4a·4b 대상에 넣는 정도.
+**실적 발표 임박** (`get_earnings_calendar`): 그 주 안에 결과가 판단에 영향을 줄 수 있는 보유 종목을 `📅 [종목] 실적 [날짜] (D-[N][, 추정 일정]) · EPS 컨센서스 [값]` 로 표시 (`date_is_estimate: true` → "(추정)", `null`(Finnhub) → 표시 없음). 응답 `errors` 의 종목은 일정이 없는 게 아니라 못 구한 것 — `error_kind: "upstream_blocked"` 면 📌 `실적 일정 조회 실패 (원천 차단): [종목들]`. **표시만 한다** — 실적 임박은 매도·축소·헤지 사유가 아니다. 비중이 크면 4a·4b 대상에 넣는 정도.
 
 ### Step 5. 과거 추천 추적 (실행 확인 + carry-over)
 1. `notifier_mcp.list_recommendations(since=<최근 2~3주>, actions="BUY,ADD,SELL,HEDGE")` — **`source` 가 `morning`·`evening` 인 것만** (`public` 은 관찰 후보 — carry-over 아님, Step 6 후보 풀로만). 전날 evening 보류도 받는다 — `list_recommendations(since=<어제>, source="evening", actions="PASS")` (⏰ 만료 → 아래, 🔍 관찰 후보 → Step 6). 대시보드는 있는데 기록이 없는 날(저장 실패)만 그 대시보드 원문(`curl -s <url>`)의 추천·보류 카드에서 보완. 직전 brief 시각은 `list_recent_dashboards(limit=5)`.
