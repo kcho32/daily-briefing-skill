@@ -14,7 +14,7 @@ managed cloud).
 All skills pull portfolio data from `portfolio_mcp` and deliver via
 `notifier_mcp`. Telegram messages are summaries / triggers; the linked
 HTML dashboard always carries the full content (narrative, sizing
-rationale, entry/stop/target, hidden risk).
+rationale, entry price limit and sized gain/loss amounts — no stop-loss or target price, hidden risk).
 
 ## Skill locations
 
@@ -87,7 +87,7 @@ telegram header tone and the dashboard button text.
 
 Macro indicators come from one `get_macro_snapshot` call (volatility & sentiment,
 rates, credit & liquidity, FX, commodities, equity indices; economy when relevant) instead of
-web searches; only the day's event calendar (FOMC, CPI, NFP …) is searched.
+web searches; the macro event calendar comes from the `calendar` group (FRED + Fed), and company filings/news from `get_company_catalysts` — web search is only a fallback.
 Investor sentiment/flows come from `get_investor_sentiment`.
 
 How to read them — indicator labelling, "no data" handling, the two-sided
