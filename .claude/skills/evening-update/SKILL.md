@@ -27,7 +27,7 @@ description: 매일 저녁 22:00 KST 자동 실행되는 *delta update*. 아침 
 ### Step 0.5. 접근 모드 확인
 `portfolio_mcp.get_access_mode()` — `account_data_available == true` 일 때만 진행. 아니면 바로 멈추지 말고 `daily-briefing § Step 0.5` 의 재확인 순서를 따른다 (계좌 없는 수집 먼저 → 재확인 → 첫 확인 2분 이상 뒤 마지막 확인). 세 번 모두 아닐 때만 `send_telegram_message` 로 `⚠️ [날짜] 저녁 업데이트 중단 — 계좌 데이터 접근 불가 (auth_mode: [값], 3회 확인 [첫 시각]~[마지막 시각] KST)` 한 줄만 보내고 종료 (계좌 없이 추정으로 채우지 않음). 호출 자체가 실패하면 Step 1 `get_portfolio_data` 로 판단.
 
-### Step 1. 데이터 수집 (병렬)
+### Step 1. 데이터 수집 (portfolio_mcp 는 하나씩 순서대로 — 512MB 서버, notifier_mcp·웹 검색은 함께 가능)
 1. `portfolio_mcp.get_portfolio_data()` — 잔고 + 시세 앵커
 2. `portfolio_mcp.get_trading_history(period_days=2)` — 오늘 체결 확인
 3. `notifier_mcp.list_recommendations(since=<오늘>, source="morning")` — 오늘 아침 추천·보류 (1차 출처)

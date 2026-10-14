@@ -68,7 +68,7 @@
 - **거시 환경·투자자 심리**: `portfolio_mcp.get_macro_snapshot` / `get_investor_sentiment` (해석 원칙 `market-analysis.md`)
 - **신규 후보**: `portfolio_mcp.screen_stocks` → 재무·컨센서스는 `get_stock_longterm_analysis`(미국) / `get_kr_stock_analysis`(한국)
 - **실적 일정**: `portfolio_mcp.get_earnings_calendar`
-- **종목 뉴스·catalyst, 거시 일정**: 웹 검색
+- **종목 뉴스·catalyst**: `portfolio_mcp.get_company_catalysts` (공시·뉴스) / **거시 일정**: `get_macro_snapshot(groups="calendar")` — 웹 검색은 여기에 없을 때만
 
 ---
 
