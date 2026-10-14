@@ -33,8 +33,8 @@ description: 매일 저녁 22:00 KST 자동 실행되는 *delta update*. 아침 
 3. `notifier_mcp.list_recommendations(since=<오늘>, source="morning")` — 오늘 아침 추천·보류 (1차 출처)
 4. `notifier_mcp.list_recent_dashboards(limit=5)` — 아침 브리핑 시각 (기록이 비었을 때 대시보드로 보완)
 4b. `notifier_mcp.get_risk_state()` — 아침이 저장한 현금 하한·축소 계획 이어받기 (daily § 리스크 상한 헌장 기록)
-5. `portfolio_mcp.get_macro_snapshot(groups="volatility_sentiment,equity_indices")` — VIX·지수 (한국은 오늘 종가)
-6. 웹 검색: 미국 지수 선물(장전), 오늘 나온 핵심 뉴스 — 아침 추천 종목·비중 큰 보유 종목 위주, 오늘·내일 거시 이벤트. 결과는 1줄씩 압축.
+5. `portfolio_mcp.get_macro_snapshot(groups="volatility_sentiment,equity_indices,calendar")` — VIX·지수 (한국은 오늘 종가)
+6. `portfolio_mcp.get_company_catalysts(symbols="<아침 추천 종목 + 비중 큰 보유 종목>", days=1)` — 오늘 나온 공시·뉴스 (1차 원천). 웹 검색은 미국 지수 선물(장전)과, 도구에 원인이 없는 큰 변화만. 오늘·내일 거시 이벤트는 5 에 `calendar` 그룹을 더해 확인. 결과는 1줄씩 압축.
 
 ### Step 2. 아침 추천 추적 (실행 확인 + carry-over)
 - 아침 이후 체결 → ✅ 한 줄 / 그 전 체결 → 생략

@@ -37,7 +37,9 @@
       "mcp__market_public_mcp__get_kr_sector_performance",
       "mcp__market_public_mcp__get_stock_longterm_analysis",
       "mcp__market_public_mcp__get_kr_stock_analysis",
-      "mcp__market_public_mcp__get_earnings_calendar"
+      "mcp__market_public_mcp__get_earnings_calendar",
+      "mcp__portfolio_mcp__get_company_catalysts",
+      "mcp__market_public_mcp__get_company_catalysts"
     ]
   }
 }
