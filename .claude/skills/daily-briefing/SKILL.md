@@ -120,8 +120,10 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 `⚠️ [날짜] 개인 브리핑 중단 — 계좌 데이터 접근 불가 (auth_mode: [값], 3회 확인 [첫 시각]~[마지막 시각] KST). 커넥터 설정을 바꾸지 않았다면 portfolio-mcp 서버 일시 문제일 수 있음 — 루틴 수동 재실행`
 호출 자체가 실패하면 `get_portfolio_data` 응답으로 판단. 나중에 계좌 도구가 `account_data_available: false` 를 주면 오류가 아니라 "권한 없음" — 같은 재확인 순서로.
 
-### Step 1. 데이터 수집 (병렬 호출)
-병렬로 호출하되 **스크리너 2개(8·9)는 서로 동시에 보내지 않고 하나씩** — 서버 메모리 초과로 계좌 도구까지 멈춘 전력 (2026-10-11).
+### Step 1. 데이터 수집
+**먼저 오늘 공개 판단이 있는지 확인한다** (Step 2 의 1·2 — 3시간 이내 공개 대시보드의 `market-judgment` JSON). 있느냐에 따라 아래 4~6 의 호출 범위가 달라진다 — 공개 브리핑이 이미 받은 시장 데이터를 다시 받지 않는다.
+
+portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — 동시 호출로 메모리 초과·재시작한 전력 2026-10-11·10-12). notifier_mcp 는 다른 서버라 함께 불러도 된다.
 
 **계좌**
 1. `portfolio_mcp.get_portfolio_data()` — 보유 종목 (국내+해외) + 시세 앵커
@@ -130,9 +132,9 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 3b. `notifier_mcp.get_risk_state()` — 현금 하한·축소 계획 이어받기 (다른 서버라 병렬 가능)
 
 **시장** (해석 원칙은 `references/market-analysis.md`)
-4. `portfolio_mcp.get_macro_snapshot(groups=...)` — 거시 지표 (그룹 선택은 market-analysis § 1)
-5. `portfolio_mcp.get_investor_sentiment(market="ALL")` — 한국 수급 + 미국 심리
-6. `portfolio_mcp.get_sector_performance()` / `get_kr_sector_performance()` — 미국·한국 섹터
+4. `portfolio_mcp.get_macro_snapshot(groups=...)` — 공개 판단이 있으면 `groups="equity_indices,volatility_sentiment"` 만 (Step 2' 벤치마크, § 리스크 상한 헌장 3 비상 해제 조건의 `drawdown_from_high_pct`·VIX, 공개 판단 이후 변화 확인 — 이 둘은 생략하지 않는다). 없으면 market-analysis § 1 대로 그룹 선택
+5. `portfolio_mcp.get_investor_sentiment(...)` — 공개 판단이 있으면 `market="KR"` 만 (한국 수급은 계좌 키가 있을 때만 나와 공개 판단에 없다 — market-analysis § 1, 미국 심리는 공개 `sentiment` 를 쓴다). 없으면 `market="ALL"`
+6. `portfolio_mcp.get_sector_performance()` / `get_kr_sector_performance()` — 공개 판단이 있으면 생략 (공개 `sector_view` 를 쓴다). 없거나, 공개 판단 이후 큰 변화를 직접 분석해야 하면 호출
 7. `portfolio_mcp.get_earnings_calendar()` — 인자 없이 → 보유 종목 실적 일정
 
 **후보** (조건값은 그날 AI 가 정한다 — market-analysis § 7)
@@ -144,12 +146,12 @@ description: 매일 아침 자동 실행되는 포트폴리오 분석 워크플�
 ### Step 2. 시장 분석 — `references/market-analysis.md` 적용
 **먼저 오늘 공개 브리핑(07:30 `market-radar`)의 시장 판단을 읽는다** — 개인 브리핑 = 공개 시장 분석 + 이 계좌에 맞춘 개인화.
 
-1. `notifier_mcp.list_recent_dashboards(limit=2, channel="public")` → `created_at` 이 **현재 기준 3시간 이내**인 공개 대시보드가 있으면 원문으로 받는다 (`curl -s <url>` — WebFetch 는 `<script>` 를 버릴 수 있음).
+1. (Step 1 맨 앞에서 한다) `notifier_mcp.list_recent_dashboards(limit=2, channel="public")` → `created_at` 이 **현재 기준 3시간 이내**인 공개 대시보드가 있으면 원문으로 받는다 (`curl -s <url>` — WebFetch 는 `<script>` 를 버릴 수 있음).
 2. `<script type="application/json" id="market-judgment">` 블록을 파싱: `stance`(위기/기회/평상/관찰), `reasons`, `key_indicators`, `sentiment`, `sector_view`, `watch_candidates`, `upcoming`, `data_gaps`.
 3. **있으면 출발점으로 쓴다** (공개 판단도 *데이터*다): 시장 판단을 처음부터 다시 만들지 않고, Step 1 의 계좌 데이터를 더해 *이 계좌에 무엇을 뜻하는지*에 집중한다. Step 1 거시 데이터로는 공개 판단 이후 바뀐 것만 확인한다.
    - Step 3 의 시장 판단이 공개 `stance` 와 **다르면 이유를 한 줄** (같으면 "공개 판단과 동일") — 텔레그램 헤더·대시보드 헤더에 쓰고 `<!-- public_stance=[값], my_stance=[값] -->` 주석 (회고가 채점). 브리핑 모드(액션·리마인드 등)는 비교 대상이 아니다.
    - 대시보드 헤더에 공개 대시보드 링크 (개인 → 공개 방향만).
-4. **없거나 읽기 실패** → 직접 분석: `market-analysis.md` 를 그대로 적용, 입력은 Step 1 거시·심리·섹터 데이터, **웹 검색은 오늘·이번 주 거시 일정(FOMC·물가·고용 등)만**. 텔레그램 `📌` 줄에 "공개 판단 없음 — 자체 분석". 공개 판단 이후 큰 변화가 있을 때도 직접 분석한다.
+4. **없거나 읽기 실패** → 직접 분석: `market-analysis.md` 를 그대로 적용, 입력은 Step 1 거시·심리·섹터 데이터 (이 경우 Step 1 4~6 을 전체 범위로 부른다), **웹 검색은 오늘·이번 주 거시 일정(FOMC·물가·고용 등)만**. 텔레그램 `📌` 줄에 "공개 판단 없음 — 자체 분석". 공개 판단 이후 큰 변화가 있을 때도 직접 분석한다.
 
 어느 경우든 지표 표기·데이터 없음 처리(추정 금지)·심리는 보조 재료라는 원칙과 그 파일 끝의 `[Dynamic Rules — 시장 판단]` 을 적용한다.
 
