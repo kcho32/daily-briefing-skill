@@ -60,7 +60,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 ### Step 0.5. 접근 모드 확인 (공개 모드여야 진행)
 
 이 루틴에 붙은 공개 커넥터(`market_public_mcp`)의 `get_access_mode()`:
-- `auth_mode == "public"` 이고 `account_data_available == false` → 진행.
+- `auth_mode == "public"` 이고 `account_data_available == false` → 진행. `kis_market_data`(KIS 시장 데이터 — 한국 수급·증시자금·KIS 추정실적)는 true·false 어느 쪽이든 진행한다 (false 면 그 데이터만 "데이터 없음").
 - **그 외(계좌 접근이 가능한 상태)면 즉시 중단한다.** 키가 있는 커넥터가 이 루틴에 잘못 붙은 것이다. 단톡방에는 아무것도 보내지 않고, 개인 채널로 경고 한 줄만 보낸다:
   `notifier_mcp.send_telegram_message(text="⚠️ [날짜] 공개 브리핑 중단 — 계좌 접근 가능한 커넥터가 붙어 있음 (auth_mode: [값]). 루틴 커넥터 확인 필요")` (channel 지정 없음 = 개인)
 
@@ -68,7 +68,7 @@ description: 매일 07:30 KST 텔레그램 단톡방에 보내는 공개 시황 
 
 portfolio 도구(`market_public_mcp` — 개인 브리핑과 같은 512MB 서버)는 **하나씩 순서대로** 부른다. 웹 검색은 함께 돌려도 된다:
 1. `get_macro_snapshot(groups=...)` — 그룹 선택은 market-analysis § 1, `calendar`(거시 발표 일정) 포함
-2. `get_investor_sentiment(market="US")` — 한국 수급은 공개 모드에서 제공되지 않는다 → "데이터 없음"
+2. `get_investor_sentiment(market="ALL")` — 미국 심리 + 한국 수급·증시자금 (KIS). `KR.available == false`(KIS 헤더 없음·`degraded` KIS 실패)면 한국 수급만 "데이터 없음" 으로 두고 진행 — 읽는 법은 market-analysis § 5
 3. `get_sector_performance()` / `get_kr_sector_performance()`
 4. `screen_stocks(market="US", ...)` → `screen_stocks(market="KR", ...)` — 조건은 그날 정한다 (market-analysis § 7)
 5. 웹 검색: 시장을 움직인 뉴스 (거시 일정은 1 의 `calendar` — 비었거나 오류면 웹 검색으로 보완). **주말이면** 주말 사이 나온 뉴스·정책·지정학 이슈와 다음 주 일정을 중심으로.
