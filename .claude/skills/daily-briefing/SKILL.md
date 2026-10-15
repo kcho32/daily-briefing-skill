@@ -133,7 +133,7 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 
 **시장** (해석 원칙은 `references/market-analysis.md`)
 4. `portfolio_mcp.get_macro_snapshot(groups=...)` — 공개 판단이 있으면 `groups="equity_indices,volatility_sentiment,calendar"` 만 (Step 2' 벤치마크, § 리스크 상한 헌장 3 비상 해제 조건의 `drawdown_from_high_pct`·VIX, 공개 판단 이후 변화 확인 — 이 둘은 생략하지 않는다). 없으면 market-analysis § 1 대로 그룹 선택 (+ `calendar` — 거시 발표 일정)
-5. `portfolio_mcp.get_investor_sentiment(...)` — 공개 판단이 있으면 `market="KR"` 만 (한국 수급은 계좌 키가 있을 때만 나와 공개 판단에 없다 — market-analysis § 1, 미국 심리는 공개 `sentiment` 를 쓴다). 없으면 `market="ALL"`
+5. `portfolio_mcp.get_investor_sentiment(...)` — 공개 판단이 있으면 `market="KR"` 만 (공개 `sentiment` 는 한 줄 요약이라 한국 수급·증시자금 숫자는 직접 받는다 — market-analysis § 1, 미국 심리는 공개 `sentiment` 를 쓴다). 없으면 `market="ALL"`
 6. `portfolio_mcp.get_sector_performance()` / `get_kr_sector_performance()` — 공개 판단이 있으면 생략 (공개 `sector_view` 를 쓴다). 없거나, 공개 판단 이후 큰 변화를 직접 분석해야 하면 호출
 7. `portfolio_mcp.get_earnings_calendar()` — 인자 없이 → 보유 종목 실적 일정
 7b. `portfolio_mcp.get_company_catalysts(symbols="<보유 종목 5개 이하>", days=<직전 브리핑 이후 일수, 최소 2>)` — 보유 종목을 **5개씩 나눠 순서대로** (한 번에 다 넣으면 응답이 수만 자라 잘린다 — 2026-10-14 드라이 런 19종목 75k자). 보유 종목의 공시·뉴스 (Step 4 신호 대조·큰 움직임·4a 의 1차 원천)
