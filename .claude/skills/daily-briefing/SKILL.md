@@ -273,9 +273,11 @@ portfolio_mcp 도구는 **하나씩 순서대로** 부른다 (512MB 서버 — �
 ### Step 9. HTML 대시보드 작성 + 발행 (매일)
 Step 8 draft 가 모두 쌓인 뒤 진입 (발사는 Step 10). 대시보드 = 결정의 근거 — 진입 즉시 `references/dashboard-design.md` Read → 그 구성대로 (시각 톤은 AI 자율). 결정이 없는 날도 발행한다 (후보 평가표가 회고 자료). 작성 직후 발행:
 ```
-result = notifier_mcp.publish_dashboard(html=<HTML>, title="포트폴리오 브리핑 YYYY-MM-DD", date="YYYY-MM-DD")
+result = notifier_mcp.publish_dashboard(html=<HTML>, title="포트폴리오 브리핑 YYYY-MM-DD", date="YYYY-MM-DD",
+                                        charts=<🛡️ 상한 대비 스펙 — 도구에 charts 인자가 있을 때만>)
 dashboard_url = result["url"]   # Step 10 버튼
 ```
+배치는 앞쪽 펼침 + `자세히 보기` 접힘 (dashboard-design.md § 구성) — 배치만 바뀌고 판단·숫자는 Step 2~8 그대로다.
 
 ### Step 9b. 추천 기록 + 리스크 상태 저장
 대시보드 발행 직후, 오늘의 추천을 **기계가 읽을 수 있는 형식**으로 저장한다 — 회고가 이 기록을 그대로 채점 도구에 넣는다 (대시보드 문장에서 추천을 다시 뽑지 않는다).
